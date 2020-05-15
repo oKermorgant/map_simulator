@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot" default="$(find turtlebot3_description)/urdf/turtlebot3_waffle_pi.urdf.xacro"/>
+    <arg name="map" default="batS"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(arg robot)"/>    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node pkg="simulation_2d" type="simulator_2d" name="simulator_2d" output="screen">
+        <param name="map" value="$(find ecn_navigation)/maps/$(arg map).yaml"/>
+        <param name="x" value="0"/>
+        <param name="y" value="0"/>
+        <param name="theta" value="0"/>
+        <param name="radius" value="0.15"/>
+        <param name="max_width" value="1200"/>
+        <param name="max_height" value="800"/>
+    </node>
+    <node pkg="map_server" name="map_server" type="map_server" args="$(find ecn_navigation)/maps/$(arg map).yaml"/>
+</launch>
