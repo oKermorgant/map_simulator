@@ -2,21 +2,19 @@
 #define OCCUPANCYGRID_H
 
 #include <opencv2/core.hpp>
-#include <sensor_msgs/LaserScan.h>
 #include <opencv2/highgui.hpp>
 
 class OccupancyGrid
 {
   cv::Mat base_map, occ_map;
-  sensor_msgs::LaserScan scan;
   float resolution;
   float x0, y0;
   float xs, ys, thetas;
   int radius;
+  float angle_min, angle_increment, range_max;
 
   const cv::Scalar robot_color{0,0,0};
   const cv::Scalar laser_color{0,0,255};
-
 
   template <typename Numeric>
   cv::Point2f pointFrom(Numeric x, Numeric y)
@@ -38,9 +36,15 @@ public:
     thetas = float(_thetas);
     radius = int(_radius/resolution);  // only for display
   }
+  void initScanSensor(float _angle_min, float _angle_inc, float _range_max)
+  {
+      angle_min = _angle_min;
+      angle_increment = _angle_inc;
+      range_max = _range_max;
+  }
 
   void computeLaserScan(const float xr, const float yr, const float thetar,
-                        sensor_msgs::LaserScan &scan);
+                        std::vector<float> &scan);
 };
 
 #endif // OCCUPANCYGRID_H

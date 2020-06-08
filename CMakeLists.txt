@@ -21,7 +21,6 @@ pkg_check_modules(YamlCpp yaml-cpp)
 
 catkin_package()
 
-
 add_executable(simulator_2d src/simulator_2d.cpp src/robot2d.cpp src/occupancy_grid.cpp)
 target_include_directories(simulator_2d PRIVATE include
                            ${catkin_INCLUDE_DIRS}

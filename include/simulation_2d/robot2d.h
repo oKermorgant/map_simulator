@@ -60,7 +60,7 @@ public:
     occupancy_grid.computeLaserScan(static_cast<float>(odom.pose.pose.position.x),
                                     static_cast<float>(odom.pose.pose.position.y),
                                     static_cast<float>(theta),
-                                    scan);
+                                    scan.ranges);
   }
 
   void publish()

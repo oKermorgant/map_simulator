@@ -114,6 +114,9 @@ std::string Robot2D::parseSensorURDF(tinyxml2::XMLElement *sensor_elem)
 
   std::string scan_topic;
   readFrom(sensor_elem, {"plugin", "topicName"}, scan_topic);
+
+  occupancy_grid.initScanSensor(scan.angle_min, scan.angle_increment, scan.range_max);
+
   return scan_topic;
 }
 

@@ -3,6 +3,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <experimental/filesystem>
+#include <iostream>
 
 namespace fs = std::experimental::filesystem;
 
@@ -59,14 +60,10 @@ void OccupancyGrid::initMap(const std::string & map_file, float max_height, floa
   }
 
   cv::cvtColor(occ_map, base_map, cv::COLOR_GRAY2BGR);
-
-
-
-
 }
 
 void OccupancyGrid::computeLaserScan(const float xr, const float yr, const float thetar,
-                                     sensor_msgs::LaserScan &scan)
+                                     std::vector<float> &scan)
 {
   cv::Mat scan_img = base_map.clone();
 
@@ -74,10 +71,10 @@ void OccupancyGrid::computeLaserScan(const float xr, const float yr, const float
   const auto origin = pointFrom(xr + xs*cos(thetar) - ys*sin(thetar),
                                 yr + xs*sin(thetar) + ys*cos(thetar));
 
-  float angle(static_cast<float>(thetar) + thetas + scan.angle_min);
-  const auto max_pix_range = int(scan.range_max / resolution);
+  float angle(static_cast<float>(thetar) + thetas + angle_min);
+  const auto max_pix_range = int(range_max / resolution);
 
-  for(auto &range: scan.ranges)
+  for(auto &range: scan)
   {
     range = 0.;
     const float c(cos(angle));
@@ -99,7 +96,7 @@ void OccupancyGrid::computeLaserScan(const float xr, const float yr, const float
         break;
       }
     }
-    angle += scan.angle_increment;
+    angle += angle_increment;
   }
   
     // display robot
