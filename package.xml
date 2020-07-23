@@ -1,24 +1,23 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>simulation_2d</name>
-  <version>0.0.0</version>
+  <version>2.0.0</version>
   <description>The simulation2D package</description>
 
   <maintainer email="olivier.kermorgant@ec-nantes.fr">Olivier Kermorgant</maintainer>
   <license>MIT</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
 
-
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <build_type>ament_cmake</build_type>
   </export>
+
 </package>

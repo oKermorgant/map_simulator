@@ -1,39 +1,38 @@
 #ifndef ROBOT2D_H
 #define ROBOT2D_H
 
-#include <ros/ros.h>
-#include <sensor_msgs/LaserScan.h>
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/Twist.h>
-#include <simulation_2d/occupancy_grid.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tinyxml2.h>
+#include <tinyxml.h>
 
-class Robot2D
+#include <simulation_2d/occupancy_grid.h>
+
+class Robot2D : public rclcpp::Node
 {
-  ros::Publisher scan_pub, odom_pub;
-  ros::Subscriber cmd_sub;
-  nav_msgs::Odometry odom;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scan_pub;
+  rclcpp::TimerBase::SharedPtr timer;
+
+  nav_msgs::msg::Odometry odom;
   OccupancyGrid occupancy_grid;
-  sensor_msgs::LaserScan scan;
+  sensor_msgs::msg::LaserScan scan;
   tf2_ros::TransformBroadcaster br;
-  geometry_msgs::TransformStamped transform;
+  geometry_msgs::msg::TransformStamped transform;
 
   const double dt;
   double theta=0;
 
-  void cmd_callback(const geometry_msgs::TwistConstPtr &cmd)
-  {
-    odom.twist.twist = *cmd;
-  }
+  void loadModel();
+  std::string parseSensorURDF(TiXmlElement * sensor_elem);
 
-  void loadModel(ros::NodeHandle &nh);
-  std::string parseSensorURDF(tinyxml2::XMLElement * sensor_elem);
-
-  void waitForTransform(ros::NodeHandle &priv);
+  void waitForTransform();
 
   template <typename T>
-  void readFrom(tinyxml2::XMLElement * root,
+  void readFrom(TiXmlElement * root,
                 std::vector<std::string> tag_sequence,
                 T & val)
   {
@@ -44,12 +43,12 @@ class Robot2D
       return;
     }
     readFrom(root->FirstChildElement(tag_sequence.front().c_str()),
-            {tag_sequence.begin()+1, tag_sequence.end()},
+    {tag_sequence.begin()+1, tag_sequence.end()},
              val);
   }
 
 public:
-  Robot2D(ros::NodeHandle &nh, const ros::Rate & loop);
+  Robot2D(uint rate);
 
   void move()
   {
@@ -65,12 +64,12 @@ public:
 
   void publish()
   {
-    odom.header.stamp = scan.header.stamp = transform.header.stamp = ros::Time::now();
+    odom.header.stamp = scan.header.stamp = transform.header.stamp = get_clock()->now();
 
     // build odom angle & publish as msg + tf
     odom.pose.pose.orientation.w = cos(theta/2);
     odom.pose.pose.orientation.z = sin(theta/2);
-    odom_pub.publish(odom);
+    odom_pub->publish(odom);
 
     // build transform
     transform.transform.translation.x = odom.pose.pose.position.x;
@@ -78,7 +77,7 @@ public:
     transform.transform.rotation = odom.pose.pose.orientation;
     br.sendTransform(transform);
 
-    scan_pub.publish(scan);
+    scan_pub->publish(scan);
   }
 };
 

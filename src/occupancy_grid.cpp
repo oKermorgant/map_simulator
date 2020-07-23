@@ -51,7 +51,7 @@ void OccupancyGrid::initMap(const std::string & map_file, float max_height, floa
 
   // deal with max dimensions
   float scale = std::min(max_height/occ_map.rows, max_width/occ_map.cols);
-  if(scale < 1)
+  if(scale != 0.f && scale < 1)
   {
     cv::resizeWindow("Simulator 2D", int(scale*occ_map.rows), int(scale*occ_map.cols));
     std::cout << "Resizing display from " <<occ_map.cols << " x " << occ_map.rows

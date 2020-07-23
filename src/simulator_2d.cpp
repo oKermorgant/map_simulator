@@ -1,21 +1,12 @@
-#include <ros/ros.h>
 #include <simulation_2d/robot2d.h>
 
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "simulator_2d");
-  ros::NodeHandle nh;
+  const uint rate(20);
 
-  ros::Rate loop(20);
-  Robot2D robot(nh, loop);
-
-  while(ros::ok())
-  {
-    robot.move();
-    robot.publish();
-
-    loop.sleep();
-    ros::spinOnce();
-  }
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<Robot2D>(rate));
+  rclcpp::shutdown();
+  return 0;
 }
