@@ -45,7 +45,12 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
 
   robots.emplace_back(spec.robot_namespace, spec.x, spec.y, spec.theta, spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(), color, laser_color);
-  robots.back().initFromURDF(spec.force_scanner);
+  auto new_robot = robots.back().initFromURDF(spec.force_scanner);
+
+  // remove any robot with same namespace (unless obstacle)
+  robots.remove_if([=](const Robot &robot)
+  {return robot.isTwin(new_robot);});
+
 }
 
 void SimulatorNode::removeRobotAt(int x, int y)

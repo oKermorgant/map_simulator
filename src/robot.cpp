@@ -9,7 +9,7 @@ namespace simulation_2d
 rclcpp::Node* Robot::Robot::sim_node;
 char Robot::n_robots = 0;
 
-Robot::Robot(std::string robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color)
+Robot::Robot(const std::string &robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color)
   : id(n_robots++), robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
     theta(_theta), laser_color(_laser_color), color(_color), radius(_radius)
 {
@@ -20,7 +20,7 @@ Robot::Robot(std::string robot_namespace, double _x, double _y, double _theta, b
     this->robot_namespace += '/';
 }
 
-void Robot::initFromURDF(bool force_scanner)
+std::pair<std::string,char> Robot::initFromURDF(bool force_scanner)
 {
   // wait for this description
   rclcpp::QoS latching_qos(1);
@@ -28,6 +28,8 @@ void Robot::initFromURDF(bool force_scanner)
   description_sub = sim_node->create_subscription<std_msgs::msg::String>(
         robot_namespace + "robot_description", latching_qos,
         [&,force_scanner](std_msgs::msg::String::SharedPtr msg) {loadModel(msg->data, force_scanner);});
+
+  return {robot_namespace,id};
 }
 
 std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml)

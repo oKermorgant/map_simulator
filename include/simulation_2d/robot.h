@@ -58,9 +58,9 @@ class Robot
 
 public:
 
-  Robot(std::string robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color);
+  Robot(const std::string &robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color);
 
-  void initFromURDF(bool force_scanner);
+  std::pair<std::string, char> initFromURDF(bool force_scanner);
 
   bool operator==(const Robot &other) const
   {
@@ -69,6 +69,11 @@ public:
   bool operator!=(const Robot &other) const
   {
     return id != other.id;
+  }
+
+  bool isTwin(const std::pair<std::string, char> &other) const
+  {
+    return robot_namespace == other.first && id != other.second;
   }
 
   // grid access

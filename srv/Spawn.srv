@@ -8,6 +8,6 @@ float64 radius 0.2
 uint8 shape 1
 uint8[3] robot_color [0,0,0]
 uint8[3] laser_color [255,0,0]
-bool force_scanner  # will assume a laser scanner attached to base_link if none is found
+bool force_scanner true # will assume a laser scanner attached to base_link if none is found
 ---
 
