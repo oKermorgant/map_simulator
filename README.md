@@ -22,7 +22,7 @@ This node takes the following arguments:
 
 - `x`, `y`, `theta`: where to spawn the robot
 - `radius`: the size of the robot (used for display + laser detection from other robots)
-- `shape`: `circle` or `square` (only `circle` is implemented for now)
+- `shape`: `circle` or `square` 
 - `robot_color`: a length-3 RGB (0-255) int array
 - `laser_color`: a length-3 RGB (0-255) int array
 - `force_scanner`: a Boolean (default True) to publish laser scans even if the URDF does not contain any laser scanner
@@ -42,3 +42,10 @@ By default, the `scan` topic is used to publish laser scans, unless another topi
 ## Spawning an obstacle
 
 The `spawn` node will spawn anything at the requested pose / size. If no `robot_description` topic is found, `cmd_vel` and `scan` topics will not be initialized but the spawned entity will be detected in the laser scans of other robots.
+
+## Examples
+
+See the `example` folder to see how to:
+- spawn R2D2 with default laser props
+- spawn Turtlebot3 with Gazebo-specified laser props
+- run RViz to display robots, laserscans and the map
