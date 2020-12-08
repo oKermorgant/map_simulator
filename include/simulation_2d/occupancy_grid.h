@@ -3,48 +3,41 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
+#include <simulation_2d/robot.h>
+#include <simulation_2d/threadpool/ThreadPool.h>
+
+namespace simulation_2d
+{
 
 class OccupancyGrid
 {
-  cv::Mat base_map, occ_map;
-  float resolution;
+  cv::Mat base_map, occ_map, scan_img;
+  float res;
   float x0, y0;
-  float xs, ys, thetas;
-  int radius;
-  float angle_min, angle_increment, range_max;
-
-  const cv::Scalar robot_color{0,0,0};
-  const cv::Scalar laser_color{0,0,255};
 
   template <typename Numeric>
   cv::Point2f pointFrom(Numeric x, Numeric y)
   {
-    return {(static_cast<float>(x)-x0)/resolution,
-          occ_map.rows-(static_cast<float>(y)-y0)/resolution};
+    return {(static_cast<float>(x)-x0)/res,
+          occ_map.rows-(static_cast<float>(y)-y0)/res};
   }
+
+  void computeLaserScan(Robot &robot, const std::list<Robot> &robots);
 
 public:
   OccupancyGrid()
   {
     cv::namedWindow("Simulator 2D", cv::WINDOW_NORMAL);
   }
+  double resolution() const
+  {
+    return res;
+  }
   void initMap(const std::string &map_file, float max_height, float max_width);
-  void initScanOffset(double _xs, double _ys, double _thetas, float _radius)
-  {
-    xs = float(_xs);
-    ys = float(_ys);
-    thetas = float(_thetas);
-    radius = int(_radius/resolution);  // only for display
-  }
-  void initScanSensor(float _angle_min, float _angle_inc, float _range_max)
-  {
-      angle_min = _angle_min;
-      angle_increment = _angle_inc;
-      range_max = _range_max;
-  }
 
-  void computeLaserScan(const float xr, const float yr, const float thetar,
-                        std::vector<float> &scan);
+  void computeLaserScans(std::list<Robot> &robots);
 };
+
+}
 
 #endif // OCCUPANCYGRID_H

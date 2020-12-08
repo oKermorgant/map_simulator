@@ -3,21 +3,19 @@
   <name>simulation_2d</name>
   <version>2.0.0</version>
   <description>The simulation2D package</description>
-
   <maintainer email="olivier.kermorgant@ec-nantes.fr">Olivier Kermorgant</maintainer>
-  <license>MIT</license>
-  
+  <license>MIT</license>  
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>rclcpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>rclcpp</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+  <depend>geometry_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>urdfdom</depend>
+  
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>
   </export>
-
 </package>
