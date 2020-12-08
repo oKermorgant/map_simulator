@@ -149,29 +149,23 @@ void Robot::loadModel(const std::string &urdf_xml, bool force_scanner)
 
 bool Robot::collidesWith(int u, int v) const
 {
-  //if(shape == Shape::Cirle)
+  if(shape == Shape::Cirle)
   {
     return (u-pos_pix.x)*(u-pos_pix.x) + (v-pos_pix.y)*(v-pos_pix.y)
         < radius*radius;
   }
-
+  const auto poly(contour());
+  return cv::pointPolygonTest(poly, cv::Point{u,v}, false) != -1;
 }
 
 void Robot::display(cv::Mat &img) const
 {
-  //if(shape == Shape::Cirle)
+  if(shape == Shape::Cirle)
   {
     cv::circle(img, pos_pix, radius, color, -1);
     return;
   }
-/*
-  const auto poly = contour();
-  for(const auto &p: poly)
-  {
-    std::cerr << p << std::endl;
-  }
-  //cv::fillPoly(img, poly, color, cv::LINE_8, 0, cv::Point());
-  cv::polylines(img, poly, true, color, 1, -1);*/
+  cv::fillConvexPoly(img, contour(), color);
 }
 }
 
