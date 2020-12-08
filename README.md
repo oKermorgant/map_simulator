@@ -12,7 +12,7 @@ Just launch `simulation2d_launch.py` by passing the `map` argument that should p
 
 Setting `map_server:=true` also runs the corresponding map server.
 
-The Simulation node advertises a service to spawn robots in. This service is wrapper into the `spawn` executable.
+The Simulation node advertises a service to spawn robots in. This service is wrapped into the `spawn` executable.
 
 ## Spawning a robot
 
