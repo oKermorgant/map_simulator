@@ -4,20 +4,31 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <opencv2/core.hpp>
 #include <tinyxml.h>
+#include <random>
 
-namespace simulation_2d
+namespace map_simulator
 {
+
+struct Pose2D
+{
+  double x=0, y=0, theta=0;
+};
 
 class Robot
 {
   enum class Shape{Cirle, Square};
 
   static char n_robots;
+  static std::default_random_engine random_engine;
+  static std::normal_distribution<double> unit_noise;
   char id;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr description_sub;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
@@ -30,11 +41,18 @@ class Robot
   // robot specs
   std::string robot_namespace;
   Shape shape;
-  double theta;
-  // laser specs
-  double scanner_x=0, scanner_y=0, scanner_theta=0;  // 2D laser offset / base_link
+  Pose2D pose;
+  double linear_noise = 0, angular_noise = 0;
+  // 2D laser offset / base_link
+  Pose2D laser_pose;
 
-  void loadModel(const std::string &urdf_xml, bool force_scanner);
+  // optional publishers
+  bool zero_joints = false;
+  sensor_msgs::msg::JointState::SharedPtr joint_states;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
+  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_br;
+
+  void loadModel(const std::string &urdf_xml, bool force_scanner, bool zero_joints, bool static_tf);
 
   template <typename T>
   static void readFrom(TiXmlElement * root,
@@ -52,15 +70,16 @@ class Robot
              val);
   }
 
-  // parsing functions
   std::tuple<bool, uint, std::string> parseLaser(const std::string &urdf_xml);
-  std::tuple<std::string,std::string> decomposeBaseLink(const std::string &urdf_xml) const;
 
 public:
 
-  Robot(const std::string &robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color);
+  Robot(const std::string &robot_namespace, const Pose2D _pose,
+        bool is_circle, double _radius,
+        cv::Scalar _color, cv::Scalar _laser_color,
+        double _linear_noise, double _angular_noise);
 
-  std::pair<std::string, char> initFromURDF(bool force_scanner);
+  std::pair<std::string, char> initFromURDF(bool force_scanner, bool zero_joints, bool static_tf);
 
   bool operator==(const Robot &other) const
   {
@@ -83,9 +102,8 @@ public:
   cv::Scalar color;
 
   float radius;
-  double x() const {return odom.pose.pose.position.x;}
-  double y() const {return odom.pose.pose.position.y;}
-  float angle() const {return theta;}
+  double x() const {return pose.x;}
+  double y() const {return pose.y;}
   void display(cv::Mat &img) const;
   std::vector<cv::Point> contour() const
   {
@@ -93,7 +111,7 @@ public:
     const double diagonal(radius / 1.414);
     for(auto corner: {0, 1, 2, 3})
     {
-      float corner_angle = theta + M_PI/4 + M_PI/2*corner;
+      float corner_angle = pose.theta + M_PI/4 + M_PI/2*corner;
       poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
                         pos_pix.y + diagonal*sin(corner_angle));
     }
@@ -102,49 +120,26 @@ public:
 
   bool collidesWith(int u, int v) const;
 
-  double x_l() const {return x() + scanner_x*cos(scanner_theta) - scanner_y*sin(scanner_theta);}
-  double y_l() const {return y() + scanner_x*sin(scanner_theta) + scanner_y*cos(scanner_theta);}
-  float theta_l() const {return theta + scanner_theta;}
+  double x_l() const {return x() + laser_pose.x*cos(laser_pose.theta) - laser_pose.y*sin(laser_pose.theta);}
+  double y_l() const {return y() + laser_pose.x*sin(laser_pose.theta) + laser_pose.y*cos(laser_pose.theta);}
+  float theta_l() const {return pose.theta + laser_pose.theta;}
 
   // shared among robots
   static rclcpp::Node* sim_node;
 
-  void move(double dt)
-  {
-    odom.pose.pose.position.x += odom.twist.twist.linear.x*cos(theta)*dt;
-    odom.pose.pose.position.y += odom.twist.twist.linear.x*sin(theta)*dt;
-    theta += odom.twist.twist.angular.z*dt;
-  }
+  void move(double dt);
 
   bool connected() const
   {
     return odom_pub.get();
   }
 
-  bool has_laser() const
+  bool hasLaser() const
   {
     return scan_pub.get();
   }
 
-  void publish(const builtin_interfaces::msg::Time &stamp,
-               tf2_ros::TransformBroadcaster *br)
-  {
-    odom.header.stamp = scan.header.stamp = transform.header.stamp = stamp;
-
-    // build odom angle & publish as msg + tf
-    odom.pose.pose.orientation.w = cos(theta/2);
-    odom.pose.pose.orientation.z = sin(theta/2);
-    odom_pub->publish(odom);
-
-    // build transform
-    transform.transform.translation.x = odom.pose.pose.position.x;
-    transform.transform.translation.y = odom.pose.pose.position.y;
-    transform.transform.rotation = odom.pose.pose.orientation;
-    br->sendTransform(transform);
-
-    if(has_laser())
-      scan_pub->publish(scan);
-  }
+  void publish(const builtin_interfaces::msg::Time &stamp, tf2_ros::TransformBroadcaster *br);
 };
 
 }

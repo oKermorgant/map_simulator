@@ -1,7 +1,7 @@
-#include <simulation_2d/simulator.h>
+#include <map_simulator/simulator.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-namespace simulation_2d
+namespace map_simulator
 {
 
 using namespace  std::chrono;
@@ -13,7 +13,7 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
 
   dt = 1./declare_parameter("rate", 20);
 
-  auto share_folder = ament_index_cpp::get_package_share_directory("simulation_2d");
+  auto share_folder = ament_index_cpp::get_package_share_directory("map_simulator");
 
   const auto map = declare_parameter<std::string>("map", share_folder + "/example/house.yaml");
   const auto max_height = declare_parameter<int>("max_height", 800);
@@ -44,8 +44,13 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   cv::Scalar color{(double)spec.robot_color[2],(double)spec.robot_color[1],(double)spec.robot_color[0]};
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
 
-  robots.emplace_back(spec.robot_namespace, spec.x, spec.y, spec.theta, spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(), color, laser_color);
-  auto new_robot = robots.back().initFromURDF(spec.force_scanner);
+  robots.emplace_back(spec.robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
+                      spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(),
+                      color, laser_color,
+                      spec.linear_noise, spec.angular_noise);
+  auto new_robot = robots.back().initFromURDF(spec.force_scanner,
+                                              spec.zero_joints,
+                                              spec.static_tf_odom);
 
   // remove any robot with same namespace (unless obstacle)
   robots.remove_if([=](const Robot &robot)
@@ -62,7 +67,10 @@ void SimulatorNode::removeRobotAt(int x, int y)
 void SimulatorNode::refresh(const rclcpp::Time &now)
 {
   for(auto &robot: robots)
-    robot.move(dt);
+  {
+    if(robot.connected())
+      robot.move(dt);
+  }
 
   grid.computeLaserScans(robots);
 
@@ -78,4 +86,4 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(simulation_2d::SimulatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(map_simulator::SimulatorNode)

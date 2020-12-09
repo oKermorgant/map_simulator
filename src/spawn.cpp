@@ -1,9 +1,9 @@
 // an executable to call a service from a launch file
 
 #include <rclcpp/rclcpp.hpp>
-#include <simulation_2d/srv/spawn.hpp>
+#include <map_simulator/srv/spawn.hpp>
 
-using simulation_2d::srv::Spawn;
+using map_simulator::srv::Spawn;
 
 int main(int argc, char** argv)
 {
@@ -20,8 +20,10 @@ int main(int argc, char** argv)
   request->radius = node->declare_parameter("radius", 0.3);
 
   const auto shape = node->declare_parameter("shape", "circle");
-
   request->shape = shape == "square" ? request->SHAPE_SQUARE : request->SHAPE_CIRCLE;
+
+  request->linear_noise = node->declare_parameter("linear_noise", 0.);
+  request->angular_noise = node->declare_parameter("angular_noise", 0.);
 
   auto robot_color = node->declare_parameter("robot_color", std::vector<int64_t>{0,0,0});
   auto laser_color = node->declare_parameter("laser_color", std::vector<int64_t>{255,0,0});
@@ -35,6 +37,8 @@ int main(int argc, char** argv)
   std::copy(laser_color.begin(), laser_color.end(), request->laser_color.begin());
 
   request->force_scanner= node->declare_parameter("force_scanner", true);
+  request->static_tf_odom = node->declare_parameter("static_tf_odom", false);
+  request->zero_joints = node->declare_parameter("zero_joints", false);
 
   auto client = node->create_client<Spawn>("/simulator/spawn");
 

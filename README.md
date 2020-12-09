@@ -18,7 +18,7 @@ The Simulation node advertises a service to spawn robots in. This service is wra
 
 The `spawn` node should be run in the same namespace as the `robot_description` topic. This namespace is used to publish topics.
 
-This node takes the following arguments:
+This node takes the following arguments, which reflect the request part of a `Spawn` service:
 
 - `x`, `y`, `theta`: where to spawn the robot
 - `radius`: the size of the robot (used for display + laser detection from other robots)
@@ -26,6 +26,8 @@ This node takes the following arguments:
 - `robot_color`: a length-3 RGB (0-255) int array
 - `laser_color`: a length-3 RGB (0-255) int array
 - `force_scanner`: a Boolean (default True) to publish laser scans even if the URDF does not contain any laser scanner
+- `static_tf_odom`: a Boolean (default False) to run a static TF broadcaster of the map -> odom frame of this robot
+- `zero_joints`:a Boolean (default False) to publish 0-values for all non-fixed joints of the robot
 
 If a Gazebo laser plugin is found, the laser scans will be published with the same specifications.
 

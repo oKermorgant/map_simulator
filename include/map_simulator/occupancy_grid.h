@@ -3,10 +3,10 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <simulation_2d/robot.h>
-#include <simulation_2d/threadpool/ThreadPool.h>
+#include <map_simulator/robot.h>
+#include <map_simulator/threadpool/ThreadPool.h>
 
-namespace simulation_2d
+namespace map_simulator
 {
 
 class OccupancyGrid

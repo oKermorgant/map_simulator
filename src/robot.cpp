@@ -1,33 +1,94 @@
-#include <simulation_2d/robot.h>
+#include <map_simulator/robot.h>
 #include <tf2_ros/transform_listener.h>
 #include <urdf/model.h>
 #include <opencv2/imgproc.hpp>
 
-namespace simulation_2d
+namespace map_simulator
 {
+
+// robot-agnostic helpers
+urdf::Model getModel(const std::string &urdf_xml)
+{
+  urdf::Model model;
+  model.initString(urdf_xml);
+  return model;
+}
+
+std::tuple<std::string, std::string, bool> decomposeBaseLink(const urdf::Model &model)
+{
+  std::string base_link(model.getRoot()->name);
+  auto prefix_length(base_link.find("base_"));
+
+  if(prefix_length != base_link.npos)
+    return {base_link, base_link.substr(0, prefix_length), true};
+  else
+    return {base_link, "", false};
+}
+
+std::vector<std::string> getVaryingJoints(const urdf::Model &model)
+{
+  std::vector<std::string> names;
+  for(const auto &[name,joint]: model.joints_)
+  {
+    if(joint->type != urdf::Joint::FIXED)
+      names.push_back(name);
+  }
+  return names;
+}
 
 rclcpp::Node* Robot::Robot::sim_node;
 char Robot::n_robots = 0;
+std::default_random_engine Robot::random_engine;
+std::normal_distribution<double> Robot::unit_noise(0,1);
 
-Robot::Robot(const std::string &robot_namespace, double _x, double _y, double _theta, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color)
+Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
   : id(n_robots++), robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
-    theta(_theta), laser_color(_laser_color), color(_color), radius(_radius)
+    pose{_pose}, linear_noise(_linear_noise), angular_noise(_angular_noise),
+    laser_color(_laser_color), color(_color), radius(_radius)
 {
-  odom.pose.pose.position.x = _x;
-  odom.pose.pose.position.y = _y;
+  odom.twist.covariance.front() = linear_noise*linear_noise;
+  odom.twist.covariance.back() = angular_noise*angular_noise;
 
   if(robot_namespace.back() != '/')
     this->robot_namespace += '/';
 }
 
-std::pair<std::string,char> Robot::initFromURDF(bool force_scanner)
+void Robot::publish(const builtin_interfaces::msg::Time &stamp,
+             tf2_ros::TransformBroadcaster *br)
+{
+  odom.header.stamp = transform.header.stamp = stamp;
+
+  // build odom angle & publish as msg + tf
+  odom_pub->publish(odom);
+
+  // build transform odom -> base link
+  transform.transform.translation.x = odom.pose.pose.position.x;
+  transform.transform.translation.y = odom.pose.pose.position.y;
+  transform.transform.rotation = odom.pose.pose.orientation;
+  br->sendTransform(transform);
+
+  if(hasLaser())
+  {
+    scan.header.stamp = stamp;
+    scan_pub->publish(scan);
+  }
+
+  if(js_pub.get() && stamp.sec > joint_states->header.stamp.sec+1)
+  {
+    joint_states->header.stamp = stamp;
+    js_pub->publish(*joint_states);
+  }
+}
+
+std::pair<std::string,char> Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
 {
   // wait for this description
   rclcpp::QoS latching_qos(1);
   latching_qos.transient_local();
   description_sub = sim_node->create_subscription<std_msgs::msg::String>(
         robot_namespace + "robot_description", latching_qos,
-        [&,force_scanner](std_msgs::msg::String::SharedPtr msg) {loadModel(msg->data, force_scanner);});
+        [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
+  {loadModel(msg->data, force_scanner,zero_joints,static_tf);});
 
   return {robot_namespace,id};
 }
@@ -65,27 +126,20 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
   return {false, samples, scan_topic};
 }
 
-std::tuple<std::string, std::string> Robot::decomposeBaseLink(const std::string &urdf_xml) const
+void Robot::loadModel(const std::string &urdf_xml,
+                      bool force_scanner,
+                      bool zero_joints,
+                      bool static_tf)
 {
-  urdf::Model model;
-  model.initString(urdf_xml);
-  std::string base_link(model.getRoot()->name);
-  auto prefix_length(base_link.find("base_"));
+  const auto model(getModel(urdf_xml));
 
-  if(prefix_length != base_link.npos)
-    return {base_link, base_link.substr(0, prefix_length)};
-  else
+  // create odom publisher + tf broadcaster
+  const auto [base_link, tf_prefix, base_link_standard] = decomposeBaseLink(model); {}
+  if(!base_link_standard)
   {
     RCLCPP_WARN(sim_node->get_logger(), "Description in namespace ", robot_namespace.c_str(),
                 " has root link named '", base_link.c_str(), "' -> cannot detect TF prefix, should start with 'base_'");
-    return {base_link, ""};
   }
-}
-
-void Robot::loadModel(const std::string &urdf_xml, bool force_scanner)
-{
-  // create odom publisher + tf broadcaster
-  const auto [base_link, tf_prefix] = decomposeBaseLink(urdf_xml); {}
 
   // try to find laser scanner as Gazebo plugin
   auto [scan_init, samples, scan_topic] = parseLaser(urdf_xml); {}
@@ -117,6 +171,7 @@ void Robot::loadModel(const std::string &urdf_xml, bool force_scanner)
   cmd_sub = sim_node->create_subscription<geometry_msgs::msg::Twist>
       (robot_namespace + "cmd_vel", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
   {
+      // save perfect command velocities here
       odom.twist.twist.linear.x = msg->linear.x;
       odom.twist.twist.angular.z = msg->angular.z;
 });
@@ -136,17 +191,72 @@ void Robot::loadModel(const std::string &urdf_xml, bool force_scanner)
         auto base_to_scan =
             tfBuffer.lookupTransform(odom.child_frame_id, scan.header.frame_id, tf2::TimePointZero);
 
-        scanner_x = base_to_scan.transform.translation.x;
-        scanner_y = base_to_scan.transform.translation.y;
-        scanner_theta = 2*atan2(base_to_scan.transform.rotation.z,
-                                base_to_scan.transform.rotation.w);
+        laser_pose.x = base_to_scan.transform.translation.x;
+        laser_pose.y = base_to_scan.transform.translation.y;
+        laser_pose.theta = 2*atan2(base_to_scan.transform.rotation.z,
+                                   base_to_scan.transform.rotation.w);
         break;
       }
       rclcpp::sleep_for(std::chrono::seconds(1));
     }
   }
-  // stop listening to robot_description
+
+  // optional setups
+  if(zero_joints)
+  {
+    // check if there are actually non-fixed joints
+    joint_states = std::make_shared<sensor_msgs::msg::JointState>();
+    joint_states->name = getVaryingJoints(model);
+    if(joint_states->name.size() == 0)
+    {
+      // pointless
+      joint_states.reset();
+    }
+    else
+    {
+      js_pub = sim_node->create_publisher<sensor_msgs::msg::JointState>(robot_namespace + "joint_states", 10);
+      joint_states->position.resize(joint_states->name.size(), 0);
+    }
+  }
+
+  if(static_tf)
+  {
+    static_tf_br = std::make_unique<tf2_ros::StaticTransformBroadcaster>(sim_node);
+    geometry_msgs::msg::TransformStamped odom2map;
+    odom2map.header.stamp = sim_node->now();
+    odom2map.header.frame_id = "map";
+    odom2map.child_frame_id = odom.header.frame_id;
+    odom2map.transform.translation.x = pose.x;
+    odom2map.transform.translation.y = pose.y;
+    odom2map.transform.rotation.z = sin(pose.theta/2);
+    odom2map.transform.rotation.w = cos(pose.theta/2);
+    static_tf_br->sendTransform(odom2map);
+  }
+
+  // stop listening to robot_description, we got what we wanted
   description_sub.reset();
+}
+
+void Robot::move(double dt)
+{
+  // update real pose with perfect velocity command
+  pose.x += odom.twist.twist.linear.x*cos(pose.theta)*dt;
+  pose.y += odom.twist.twist.linear.x*sin(pose.theta)*dt;
+  pose.theta += odom.twist.twist.angular.z*dt;
+
+  // add noise: command velocity to measured one
+  odom.twist.twist.linear.x *= (1+linear_noise*unit_noise(random_engine));
+  odom.twist.twist.angular.z *= (1+angular_noise*unit_noise(random_engine));
+
+  // update noised odometry
+  odom.pose.pose.position.x += odom.twist.twist.linear.x*cos(pose.theta)*dt;
+  odom.pose.pose.position.y += odom.twist.twist.linear.x*sin(pose.theta)*dt;
+  double theta = 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
+  theta += odom.twist.twist.angular.z*dt;
+  odom.pose.pose.orientation.z = sin(theta/2);
+  odom.pose.pose.orientation.w = cos(theta/2);
+
+  // TODO compute pose covariance for info (not used by EKFs anyway)
 }
 
 bool Robot::collidesWith(int u, int v) const
@@ -170,4 +280,3 @@ void Robot::display(cv::Mat &img) const
   cv::fillConvexPoly(img, contour(), color);
 }
 }
-

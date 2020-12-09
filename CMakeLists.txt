@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(simulation_2d)
+project(map_simulator)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -44,7 +44,7 @@ endif()
 
 # auto-executable from node
 rclcpp_components_register_node(simulator_node
-  PLUGIN "simulation_2d::SimulatorNode"
+  PLUGIN "map_simulator::SimulatorNode"
   EXECUTABLE simulator)
 
 install(TARGETS simulator_node

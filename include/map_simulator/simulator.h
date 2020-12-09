@@ -2,15 +2,15 @@
 #define SIMULATOR_H
 
 #include <rclcpp/rclcpp.hpp>
-#include <simulation_2d/occupancy_grid.h>
-#include <simulation_2d/robot.h>
-#include <simulation_2d/srv/spawn.hpp>
+#include <map_simulator/occupancy_grid.h>
+#include <map_simulator/robot.h>
+#include <map_simulator/srv/spawn.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
-namespace simulation_2d
+namespace map_simulator
 {
 
-using simulation_2d::srv::Spawn;
+using map_simulator::srv::Spawn;
 
 class SimulatorNode : public rclcpp::Node
 {

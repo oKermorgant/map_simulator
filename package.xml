@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>simulation_2d</name>
+  <name>map_simulator</name>
   <version>2.0.0</version>
-  <description>The simulation2D package</description>
+  <description>Multi-robot 2D simulation with a map-based environment</description>
   <maintainer email="olivier.kermorgant@ec-nantes.fr">Olivier Kermorgant</maintainer>
   <license>MIT</license>  
   <buildtool_depend>ament_cmake</buildtool_depend>

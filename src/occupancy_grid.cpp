@@ -1,4 +1,4 @@
-#include <simulation_2d/occupancy_grid.h>
+#include <map_simulator/occupancy_grid.h>
 #include <yaml-cpp/yaml.h>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -7,7 +7,7 @@
 
 namespace fs = std::experimental::filesystem;
 
-namespace simulation_2d
+namespace map_simulator
 {
 
 void OccupancyGrid::initMap(const std::string & map_file, float max_height, float max_width)
@@ -69,10 +69,10 @@ void OccupancyGrid::computeLaserScans(std::list<Robot> &robots)
   for(auto &robot: robots)
     robot.pos_pix = pointFrom(robot.x(), robot.y());
 
-  // TODO try to have threadpool work
+  // TODO try to have threadpool work here, but they have to work on the same image
   for(auto &robot: robots)
   {
-    if(robot.has_laser())
+    if(robot.hasLaser())
       computeLaserScan(robot, robots);
   }
 
