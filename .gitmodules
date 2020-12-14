@@ -1,3 +1,0 @@
-[submodule "include/simulation_2d/threadpool"]
-	path = include/simulation_2d/threadpool
-	url = https://github.com/nbsdx/ThreadPool.git

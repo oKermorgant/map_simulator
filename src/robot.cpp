@@ -249,10 +249,11 @@ void Robot::move(double dt)
   odom.twist.twist.angular.z *= (1+angular_noise*unit_noise(random_engine));
 
   // update noised odometry
-  odom.pose.pose.position.x += odom.twist.twist.linear.x*cos(pose.theta)*dt;
-  odom.pose.pose.position.y += odom.twist.twist.linear.x*sin(pose.theta)*dt;
   double theta = 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
   theta += odom.twist.twist.angular.z*dt;
+  odom.pose.pose.position.x += odom.twist.twist.linear.x*cos(theta)*dt;
+  odom.pose.pose.position.y += odom.twist.twist.linear.x*sin(theta)*dt;
+
   odom.pose.pose.orientation.z = sin(theta/2);
   odom.pose.pose.orientation.w = cos(theta/2);
 
