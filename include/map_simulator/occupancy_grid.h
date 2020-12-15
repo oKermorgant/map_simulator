@@ -4,7 +4,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <map_simulator/robot.h>
-#include <map_simulator/threadpool/ThreadPool.h>
 
 namespace map_simulator
 {
