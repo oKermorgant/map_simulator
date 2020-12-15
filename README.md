@@ -1,4 +1,4 @@
-# simulation_2d
+# map_simulator
 
 This package provides a 2D simulator for mobile robots. The environment is based on a standard ROS map. Robots move through a `cmd_vel` topic and may publish a laser scan.
 
