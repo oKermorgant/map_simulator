@@ -28,6 +28,7 @@ This node takes the following arguments, which reflect the request part of a `Sp
 - `force_scanner`: a Boolean (default True) to publish laser scans even if the URDF does not contain any laser scanner
 - `static_tf_odom`: a Boolean (default False) to run a static TF broadcaster of the map -> odom frame of this robot
 - `zero_joints`:a Boolean (default False) to publish 0-values for all non-fixed joints of the robot
+- `linear_noise` and `angular_noise`: a float (default 0) for the standard deviation of the noise added to the robot velocity twist, 
 
 If a Gazebo laser plugin is found, the laser scans will be published with the same specifications.
 
