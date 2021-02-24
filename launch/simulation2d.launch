@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="map" default="$(find map_simulator)/example/house.yaml"/>
+    <arg name="map_server" default="True"/>
+    
+    <node pkg="map_simulator" type="simulator" name="simulator" output="screen">
+        <param name="map" value="$(arg map)"/>
+        <param name="rate" value="20"/>
+        <param name="max_width" value="1200"/>
+        <param name="max_height" value="800"/>
+    </node>
+    
+    <node pkg="map_server" name="map_server" type="map_server" args="$(arg map)" if="$(arg map_server)"/>
+</launch>

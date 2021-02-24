@@ -1,0 +1,17 @@
+uint8 SHAPE_SQUARE = 0
+uint8 SHAPE_CIRCLE = 1
+string robot_namespace
+float64 x 0
+float64 y 0
+float64 theta 0
+float64 radius 0.2
+uint8 shape 1
+uint8[3] robot_color [0,0,0]
+uint8[3] laser_color [255,0,0]
+bool force_scanner true # will assume a laser scanner attached to base_link if none is found
+float64 linear_noise 0
+float64 angular_noise 0
+bool static_tf_odom false   # static tf of the map -> odom exact transform 
+bool zero_joints false # publishes 0-value for all non-fixed joints (wheels...)
+---
+
