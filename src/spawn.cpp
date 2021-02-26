@@ -4,6 +4,36 @@
 #include <ros/ros.h>
 #include <map_simulator/Spawn.h>
 
+std::vector<int> read_color(ros::NodeHandle &node, std::string param, std::vector<int> fallback)
+{
+  auto color = node.param<std::string>(param, "");
+
+  std::vector<int> rgb;
+  // check formatting
+  auto begin = color.find("[");
+  auto end = color.find("]");
+  if(begin != color.npos && end != color.npos)
+  {
+    color = color.substr(begin+1, end-begin-1);
+
+    auto comma = color.find(",");
+    if(comma != color.npos)
+    {
+      rgb.push_back(std::stoi(color.substr(0, comma)));
+      color = color.substr(comma+1);
+      comma = color.find(",");
+      if(comma != color.npos)
+      {
+        rgb.push_back(std::stoi(color.substr(0, comma)));
+        rgb.push_back(std::stoi(color.substr(comma+1)));
+        return rgb;
+      }
+    }
+  }
+  return fallback;
+}
+
+
 using map_simulator::Spawn;
 
 int main(int argc, char** argv)
@@ -27,11 +57,9 @@ int main(int argc, char** argv)
   request.linear_noise = node.param("linear_noise", 0.);
   request.angular_noise = node.param("angular_noise", 0.);
 
-  auto robot_color = node.param("robot_color", std::vector<int>{0,0,0});
-  auto laser_color = node.param("laser_color", std::vector<int>{255,0,0});
+  auto robot_color = read_color(node, "robot_color", std::vector<int>{0,0,0});
+  auto laser_color = read_color(node, "laser_color", std::vector<int>{255,0,0});
 
-  if(robot_color.size() != 3)
-    robot_color = {0,0,0};
   std::copy(robot_color.begin(), robot_color.end(), request.robot_color.begin());
 
   if(laser_color.size() != 3)

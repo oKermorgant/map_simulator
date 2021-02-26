@@ -6,11 +6,11 @@
         
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
         
-        <node pkg="map_simulator" type="spawn" name="spawn">
+        <node pkg="map_simulator" type="spawn" name="spawn" output="screen">
             <param name="zero_joints" value="true"/>
             <param name="static_tf_odom" value="true"/>
             <param name="radius" value=".2"/>
-            <param name="x" value="1."/>
+            <param name="x" value="0."/>
             <param name="robot_color" value="[50,50,50]"/>
             <param name="laser_color" value="[0,255,0]"/>
         </node>

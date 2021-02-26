@@ -9,7 +9,7 @@
             <param name="zero_joints" value="true"/>
             <param name="static_tf_odom" value="true"/>
             <param name="radius" value=".2"/>
-            <param name="x" value="1."/>
+            <param name="x" value="1"/>
             <param name="robot_color" value="[50,50,50]"/>
             <param name="laser_color" value="[0,255,0]"/>
         </node>
