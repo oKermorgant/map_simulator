@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-    <group ns="waffle">
+
+    <arg name="name" default="waffle"/>
+    <group ns="$(arg name)">
     
-        <param name="robot_description" command="$(find xacro)/xacro $(find map_simulator)/example/turtlebot3_waffle_pi.urdf"/>
+        <param name="robot_description" command="$(find xacro)/xacro $(find map_simulator)/example/turtlebot3_waffle_pi.urdf.xacro prefix:=$(arg name)/"/>
         
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
         

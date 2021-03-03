@@ -7,11 +7,12 @@
         
         <node pkg="map_simulator" type="spawn" name="spawn">
             <param name="zero_joints" value="true"/>
+            <param name="shape" value="square"/>
             <param name="static_tf_odom" value="true"/>
-            <param name="radius" value=".2"/>
+            <param name="radius" value=".3"/>
             <param name="x" value="1"/>
-            <param name="robot_color" value="[50,50,50]"/>
-            <param name="laser_color" value="[0,255,0]"/>
+            <param name="robot_color" value="[100,50,50]"/>
+            <param name="laser_color" value="[250,0,0]"/>
         </node>
     </group>
 </launch>

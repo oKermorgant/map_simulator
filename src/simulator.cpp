@@ -4,12 +4,8 @@
 namespace map_simulator
 {
 
-bool test(map_simulator::SpawnRequest &req, map_simulator::SpawnResponse &res)
-{
-  return true;
-}
-
 using namespace  std::chrono;
+
 SimulatorNode::SimulatorNode()
 {
 
@@ -27,13 +23,19 @@ SimulatorNode::SimulatorNode()
   const auto max_height = priv.param("max_height", 800);
   const auto max_width = priv.param("max_width", 1200);
 
-  grid.initMap(map, max_height, max_width);
-  cv::setMouseCallback("Simulator 2D", [](int event, int x, int y, int , void* node_ptr)
+  const auto use_display = priv.param("display", true);
+
+  grid.initMap(map, max_height, max_width, use_display);
+
+  if(use_display)
   {
-    if(event != cv::EVENT_LBUTTONDBLCLK)
-      return;
-    ((SimulatorNode*)node_ptr)->removeRobotAt(x, y);
-  }, this);
+    cv::setMouseCallback("Simulator 2D", [](int event, int x, int y, int , void* node_ptr)
+    {
+      if(event != cv::EVENT_LBUTTONDBLCLK)
+        return;
+      ((SimulatorNode*)node_ptr)->removeRobotAt(x, y);
+    }, this);
+  }
 
   refresh_timer = createTimer(ros::Duration(dt),[&](auto &){refresh(ros::Time::now());});
 
@@ -79,7 +81,7 @@ void SimulatorNode::refresh(const ros::Time &now)
   for(auto &robot: robots)
   {
     if(robot.connected())
-        robot.publish(now, &br);
+      robot.publish(now, &br);
   }
 }
 

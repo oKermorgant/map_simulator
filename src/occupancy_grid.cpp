@@ -10,7 +10,7 @@ namespace fs = std::experimental::filesystem;
 namespace map_simulator
 {
 
-void OccupancyGrid::initMap(const std::string & map_file, float max_height, float max_width)
+void OccupancyGrid::initMap(const std::string & map_file, float max_height, float max_width, bool use_display)
 {
   YAML::Node map_data = YAML::LoadFile(map_file);
 
@@ -36,26 +36,32 @@ void OccupancyGrid::initMap(const std::string & map_file, float max_height, floa
 
   for(int i=0; i<occ_map.rows; i++)
   {
-      for(int j=0; j<occ_map.cols; j++)
-      {
-       auto & pix(occ_map.at<uchar>(i,j));
-       const double p = negate ? pix/255. : (255.-pix)/255.;
+    for(int j=0; j<occ_map.cols; j++)
+    {
+      auto & pix(occ_map.at<uchar>(i,j));
+      const double p = negate ? pix/255. : (255.-pix)/255.;
 
-       if(p > occ_thr)
-         pix = 0;
-       else if(p < free_thr)
-         pix = 255;
-       else
-       {
-         pix = 255 - uchar(255*p);
-       }
+      if(p > occ_thr)
+        pix = 0;
+      else if(p < free_thr)
+        pix = 255;
+      else
+      {
+        pix = 255 - uchar(255*p);
       }
+    }
   }
 
-  // deal with max dimensions
-  float scale = std::min(max_height/occ_map.rows, max_width/occ_map.cols);
-  if(scale != 0.f && scale < 1)
-    cv::resizeWindow("Simulator 2D", int(scale*occ_map.rows), int(scale*occ_map.cols));
+  this->use_display = use_display;
+  if(use_display)
+  {
+    cv::namedWindow("Simulator 2D", cv::WINDOW_NORMAL);
+    float scale = std::min(max_height/occ_map.rows, max_width/occ_map.cols);
+    if(scale != 0.f && scale < 1)
+      cv::resizeWindow("Simulator 2D", int(scale*occ_map.cols), int(scale*occ_map.rows));
+    else
+      cv::resizeWindow("Simulator 2D", occ_map.cols, occ_map.rows);
+  }
 
   cv::cvtColor(occ_map, base_map, cv::COLOR_GRAY2BGR);
 }
@@ -76,12 +82,14 @@ void OccupancyGrid::computeLaserScans(std::list<Robot> &robots)
       computeLaserScan(robot, robots);
   }
 
-  // display robot
-  for(const auto &robot: robots)
-    robot.display(scan_img);
+  if(use_display)
+  {
+    for(const auto &robot: robots)
+      robot.display(scan_img);
 
-  cv::imshow("Simulator 2D", scan_img);
-  cv::waitKey(1);
+    cv::imshow("Simulator 2D", scan_img);
+    cv::waitKey(1);
+  }
 }
 
 
@@ -113,10 +121,10 @@ void OccupancyGrid::computeLaserScan(Robot &robot, const std::list<Robot> &robot
       for(const auto &other: robots)
       {
         if(robot != other && other.collidesWith(u, v))
-          {
-            hit = true;
-            break;
-          }
+        {
+          hit = true;
+          break;
+        }
       }
 
       hit = hit || occ_map.at<uchar>(v, u) == 0;
