@@ -13,21 +13,26 @@ std::vector<int> read_color(ros::NodeHandle &node, std::string param, std::vecto
   auto begin = color.find("[");
   auto end = color.find("]");
   if(begin != color.npos && end != color.npos)
-  {
     color = color.substr(begin+1, end-begin-1);
 
-    auto comma = color.find(",");
+  auto sep = ',';
+  auto comma = color.find(sep);
+  if(comma == color.npos)
+  {
+    sep = ' ';
+    comma = color.find(sep);
+  }
+
+  if(comma != color.npos)
+  {
+    rgb.push_back(std::stoi(color.substr(0, comma)));
+    color = color.substr(comma+1);
+    comma = color.find(sep);
     if(comma != color.npos)
     {
       rgb.push_back(std::stoi(color.substr(0, comma)));
-      color = color.substr(comma+1);
-      comma = color.find(",");
-      if(comma != color.npos)
-      {
-        rgb.push_back(std::stoi(color.substr(0, comma)));
-        rgb.push_back(std::stoi(color.substr(comma+1)));
-        return rgb;
-      }
+      rgb.push_back(std::stoi(color.substr(comma+1)));
+      return rgb;
     }
   }
   return fallback;
