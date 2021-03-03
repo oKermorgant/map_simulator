@@ -14,4 +14,3 @@ float64 angular_noise
 bool static_tf_odom  # static tf of the map -> odom exact transform 
 bool zero_joints # publishes 0-value for all non-fixed joints (wheels...)
 ---
-

@@ -91,7 +91,7 @@ void Robot::publish(const ros::Time &stamp,
 
 std::pair<std::string,char> Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
 {
-  std::thread listen_description_5sec([&]()
+  std::thread listen_description_5sec([=]()
   {
     auto t0 = ros::Time::now().sec;
     auto t = t0;

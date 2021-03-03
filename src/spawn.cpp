@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     laser_color = {255,0,0};
   std::copy(laser_color.begin(), laser_color.end(), request.laser_color.begin());
 
-  request.force_scanner= node.param("force_scanner", true);
+  request.force_scanner = node.param("force_scanner", true);
   request.static_tf_odom = node.param("static_tf_odom", false);
   request.zero_joints = node.param("zero_joints", false);
 

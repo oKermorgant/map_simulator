@@ -42,7 +42,7 @@ SimulatorNode::SimulatorNode()
   spawn_srv = advertiseService("/simulator/spawn", &SimulatorNode::addRobot, this);
 }
 
-bool SimulatorNode::addRobot(SpawnRequest &spec, SpawnResponse &)
+bool SimulatorNode::addRobot(SpawnRequest & spec, SpawnResponse &)
 {
   cv::Scalar color{(double)spec.robot_color[2],(double)spec.robot_color[1],(double)spec.robot_color[0]};
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
@@ -51,6 +51,7 @@ bool SimulatorNode::addRobot(SpawnRequest &spec, SpawnResponse &)
                       spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(),
                       color, laser_color,
                       spec.linear_noise, spec.angular_noise);
+
   auto new_robot = robots.back().initFromURDF(spec.force_scanner,
                                               spec.zero_joints,
                                               spec.static_tf_odom);
