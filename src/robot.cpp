@@ -177,7 +177,7 @@ void Robot::loadModel(const std::string &urdf_xml,
 });
 
   // get offset between base link and scanner
-  if(scan.header.frame_id != base_link)
+  if(scan_pub.get() && scan.header.frame_id != base_link)
   {
     tf2_ros::Buffer tfBuffer(sim_node->get_clock());
     tf2_ros::TransformListener tfListener(tfBuffer);
