@@ -18,14 +18,18 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
   const auto map = declare_parameter<std::string>("map", share_folder + "/example/house.yaml");
   const auto max_height = declare_parameter<int>("max_height", 800);
   const auto max_width = declare_parameter<int>("max_width", 1200);
+  const auto use_display = declare_parameter<bool>("display", true);
 
-  grid.initMap(map, max_height, max_width);
-  cv::setMouseCallback("Simulator 2D", [](int event, int x, int y, int , void* node_ptr)
+  grid.initMap(map, max_height, max_width, use_display);
+  if(use_display)
   {
-    if(event != cv::EVENT_LBUTTONDBLCLK)
-      return;
-    ((SimulatorNode*)node_ptr)->removeRobotAt(x, y);
-  }, this);
+    cv::setMouseCallback("Simulator 2D", [](int event, int x, int y, int , void* node_ptr)
+    {
+      if(event != cv::EVENT_LBUTTONDBLCLK)
+        return;
+      ((SimulatorNode*)node_ptr)->removeRobotAt(x, y);
+    }, this);
+  }
 
   refresh_timer = create_wall_timer(milliseconds((long)(1000*dt)), [&]()
   {refresh(now());});
@@ -77,7 +81,7 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
   for(auto &robot: robots)
   {
     if(robot.connected())
-        robot.publish(now, &br);
+      robot.publish(now, &br);
   }
 }
 

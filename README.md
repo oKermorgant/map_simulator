@@ -12,6 +12,8 @@ Just launch `simulation2d_launch.py` by passing the `map` argument that should p
 
 Setting `map_server:=true` also runs the corresponding map server.
 
+Setting `display:=false` runs the simulation without display.
+
 The Simulation node advertises a service to spawn robots in. This service is wrapped into the `spawn` executable.
 
 ## Spawning a robot
@@ -34,7 +36,7 @@ If a Gazebo laser plugin is found, the laser scans will be published with the sa
 
 ## Unspawning robots
 
-Just double-clic on the robot you want to remove.
+Just double-clic on the robot you want to remove. It cannot be done if `display` was set to False.
 
 ## Robot topics
 
