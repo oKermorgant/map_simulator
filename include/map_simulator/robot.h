@@ -30,7 +30,6 @@ class Robot
   static std::default_random_engine random_engine;
   static std::normal_distribution<double> unit_noise;
   char id;
-  std::unique_ptr<ros::Subscriber> description_sub;
   std::unique_ptr<ros::Subscriber> cmd_sub;
   std::unique_ptr<ros::Publisher> odom_pub;
   std::unique_ptr<ros::Publisher> scan_pub;

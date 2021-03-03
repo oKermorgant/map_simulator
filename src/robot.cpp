@@ -197,8 +197,9 @@ void Robot::loadModel(const std::string &urdf_xml,
                                                 odom.twist.twist.linear.x = msg->linear.x;
                                                 odom.twist.twist.angular.z = msg->angular.z;
                                               }));
-  // get offset between base link and scanner
-  if(scan.header.frame_id != base_link)
+
+  // get offset between base link and scanner, if any
+  if(scan_pub.get() && scan.header.frame_id != base_link)
   {
     tf2_ros::Buffer tfBuffer;
     tf2_ros::TransformListener tfListener(tfBuffer);
@@ -249,9 +250,6 @@ void Robot::loadModel(const std::string &urdf_xml,
     odom2map.transform.rotation.w = cos(pose.theta/2);
     static_tf_br->sendTransform(odom2map);
   }
-
-  // stop listening to robot_description, we got what we wanted
-  description_sub.reset();
 }
 
 void Robot::move(double dt)
