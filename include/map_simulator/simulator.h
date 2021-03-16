@@ -23,6 +23,7 @@ protected:
   ros::Timer refresh_timer;
 
   double dt;
+  ros::Time last_tf;
 
   tf2_ros::TransformBroadcaster br;
 
