@@ -25,6 +25,7 @@ protected:
   double dt;
 
   tf2_ros::TransformBroadcaster br;
+  rclcpp::Time last_tf;
 
   rclcpp::Service<Spawn>::SharedPtr spawn_srv;
 

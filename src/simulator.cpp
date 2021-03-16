@@ -78,10 +78,14 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
 
   grid.computeLaserScans(robots);
 
-  for(auto &robot: robots)
+  if(last_tf != now)
   {
-    if(robot.connected())
-      robot.publish(now, &br);
+    for(auto &robot: robots)
+    {
+      if(robot.connected())
+        robot.publish(now, &br);
+    }
+    last_tf = now;
   }
 }
 
