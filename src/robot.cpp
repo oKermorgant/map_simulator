@@ -173,6 +173,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   {
       // save perfect command velocities here
       odom.twist.twist.linear.x = msg->linear.x;
+      odom.twist.twist.linear.y = msg->linear.y;
       odom.twist.twist.angular.z = msg->angular.z;
 });
 
@@ -240,12 +241,17 @@ void Robot::loadModel(const std::string &urdf_xml,
 void Robot::move(double dt)
 {
   // update real pose with perfect velocity command
-  pose.x += odom.twist.twist.linear.x*cos(pose.theta)*dt;
-  pose.y += odom.twist.twist.linear.x*sin(pose.theta)*dt;
-  pose.theta += odom.twist.twist.angular.z*dt;
+  pose.theta += .5*odom.twist.twist.angular.z*dt;
+  const auto c(cos(pose.theta));
+  const auto s(sin(pose.theta));
+  const auto vx(odom.twist.twist.linear.x), vy(odom.twist.twist.linear.y);
+  pose.x += (vx*c - vy*s)*dt;
+  pose.y += (vx*s + vy*c)*dt;
+  pose.theta += .5*odom.twist.twist.angular.z*dt;
 
   // add noise: command velocity to measured one
   odom.twist.twist.linear.x *= (1+linear_noise*unit_noise(random_engine));
+  odom.twist.twist.linear.y *= (1+linear_noise*unit_noise(random_engine));
   odom.twist.twist.angular.z *= (1+angular_noise*unit_noise(random_engine));
 
   // update noised odometry
