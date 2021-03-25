@@ -10,7 +10,6 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
 {
 
   Robot::sim_node = this;
-
   dt = 1./declare_parameter("rate", 20);
 
   auto share_folder = ament_index_cpp::get_package_share_directory("map_simulator");
@@ -78,14 +77,14 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
 
   grid.computeLaserScans(robots);
 
-  if(last_tf != now)
+  if(last_tf != now.nanoseconds())
   {
     for(auto &robot: robots)
     {
       if(robot.connected())
         robot.publish(now, &br);
     }
-    last_tf = now;
+    last_tf = now.nanoseconds();
   }
 }
 
