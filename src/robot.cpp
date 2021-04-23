@@ -255,11 +255,11 @@ void Robot::loadModel(const std::string &urdf_xml,
 
 void Robot::move(double dt)
 {
-  // update real pose with perfect velocity command
-  pose.theta += .5*odom.twist.twist.angular.z*dt;
+  // update real pose with perfect velocity command  
   auto &vx(odom.twist.twist.linear.x);
   auto &vy(odom.twist.twist.linear.y);
   auto &wz(odom.twist.twist.angular.z);
+  pose.theta += .5*wz*dt;
   pose.x += (vx*cos(pose.theta) - vy*sin(pose.theta))*dt;
   pose.y += (vx*sin(pose.theta) + vy*cos(pose.theta))*dt;
   pose.theta += .5*wz*dt;
