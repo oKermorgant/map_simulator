@@ -240,25 +240,25 @@ void Robot::loadModel(const std::string &urdf_xml,
 
 void Robot::move(double dt)
 {
-  // update real pose with perfect velocity command
-  pose.theta += .5*odom.twist.twist.angular.z*dt;
-  const auto c(cos(pose.theta));
-  const auto s(sin(pose.theta));
-  const auto vx(odom.twist.twist.linear.x), vy(odom.twist.twist.linear.y);
-  pose.x += (vx*c - vy*s)*dt;
-  pose.y += (vx*s + vy*c)*dt;
-  pose.theta += .5*odom.twist.twist.angular.z*dt;
+  // update real pose with perfect velocity command  
+  auto &vx(odom.twist.twist.linear.x);
+  auto &vy(odom.twist.twist.linear.y);
+  auto &wz(odom.twist.twist.angular.z);
+  pose.theta += .5*wz*dt;
+  pose.x += (vx*cos(pose.theta) - vy*sin(pose.theta))*dt;
+  pose.y += (vx*sin(pose.theta) + vy*cos(pose.theta))*dt;
+  pose.theta += .5*wz*dt;
 
   // add noise: command velocity to measured one
-  odom.twist.twist.linear.x *= (1+linear_noise*unit_noise(random_engine));
-  odom.twist.twist.linear.y *= (1+linear_noise*unit_noise(random_engine));
-  odom.twist.twist.angular.z *= (1+angular_noise*unit_noise(random_engine));
+  vx *= (1+linear_noise*unit_noise(random_engine));
+  vy *= (1+linear_noise*unit_noise(random_engine));
+  wz *= (1+angular_noise*unit_noise(random_engine));
 
   // update noised odometry
   double theta = 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
   theta += odom.twist.twist.angular.z*dt;
-  odom.pose.pose.position.x += odom.twist.twist.linear.x*cos(theta)*dt;
-  odom.pose.pose.position.y += odom.twist.twist.linear.x*sin(theta)*dt;
+  odom.pose.pose.position.x += (vx*cos(pose.theta) - vy*sin(pose.theta))*dt;
+  odom.pose.pose.position.y += (vx*sin(pose.theta) + vy*cos(pose.theta))*dt;
 
   odom.pose.pose.orientation.z = sin(theta/2);
   odom.pose.pose.orientation.w = cos(theta/2);
