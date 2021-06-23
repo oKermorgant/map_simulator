@@ -1,5 +1,5 @@
 # OK general gitignore
-
+.directory
 # Compiled source #
 ###################
 *.com

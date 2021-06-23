@@ -18,10 +18,9 @@ def generate_launch_description():
     
     with sl.group(if_arg='map_server'):
         sl.node('nav2_map_server','map_server',name='map_server',
-            parameters=[{'yaml_filename': sl.arg('map')}])
+            parameters={'yaml_filename': sl.arg('map')})
         sl.node('nav2_lifecycle_manager','lifecycle_manager',name='lifecycle_manager_map',
         output='screen',
-        parameters=[{'autostart': True},
-                {'node_names': ['map_server']}])
+        parameters={'autostart': True, 'node_names': ['map_server']})
         
     return sl.launch_description()

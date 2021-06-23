@@ -111,7 +111,7 @@ public:
     const double diagonal(radius / 1.414);
     for(auto corner: {0, 1, 2, 3})
     {
-      float corner_angle = pose.theta + M_PI/4 + M_PI/2*corner;
+      float corner_angle = -pose.theta + M_PI/4 + M_PI/2*corner;
       poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
                         pos_pix.y + diagonal*sin(corner_angle));
     }
