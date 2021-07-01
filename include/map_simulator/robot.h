@@ -20,6 +20,13 @@ namespace map_simulator
 struct Pose2D
 {
   double x=0, y=0, theta=0;
+  inline void updateFrom(double vx, double vy, double wz, double dt)
+  {
+    theta += .5*wz*dt;
+    x += (vx*cos(theta) - vy*sin(theta))*dt;
+    y += (vx*sin(theta) + vy*cos(theta))*dt;
+    theta += .5*wz*dt;
+  }
 };
 
 class Robot

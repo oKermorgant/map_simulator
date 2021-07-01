@@ -244,10 +244,8 @@ void Robot::move(double dt)
   auto &vx(odom.twist.twist.linear.x);
   auto &vy(odom.twist.twist.linear.y);
   auto &wz(odom.twist.twist.angular.z);
-  pose.theta += .5*wz*dt;
-  pose.x += (vx*cos(pose.theta) - vy*sin(pose.theta))*dt;
-  pose.y += (vx*sin(pose.theta) + vy*cos(pose.theta))*dt;
-  pose.theta += .5*wz*dt;
+
+  pose.updateFrom(vx, vy, wz, dt);
 
   // add noise: command velocity to measured one
   vx *= (1+linear_noise*unit_noise(random_engine));
@@ -255,13 +253,14 @@ void Robot::move(double dt)
   wz *= (1+angular_noise*unit_noise(random_engine));
 
   // update noised odometry
-  double theta = 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
-  theta += odom.twist.twist.angular.z*dt;
-  odom.pose.pose.position.x += (vx*cos(pose.theta) - vy*sin(pose.theta))*dt;
-  odom.pose.pose.position.y += (vx*sin(pose.theta) + vy*cos(pose.theta))*dt;
+  Pose2D rel_pose{odom.pose.pose.position.x, odom.pose.pose.position.y,
+                 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)};
+  rel_pose.updateFrom(vx, vy, wz, dt);
 
-  odom.pose.pose.orientation.z = sin(theta/2);
-  odom.pose.pose.orientation.w = cos(theta/2);
+  odom.pose.pose.position.x = rel_pose.x;
+  odom.pose.pose.position.y = rel_pose.y;
+  odom.pose.pose.orientation.z = sin(rel_pose.theta/2);
+  odom.pose.pose.orientation.w = cos(rel_pose.theta/2);
 
   // TODO compute pose covariance for info (not used by EKFs anyway)
 }
