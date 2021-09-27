@@ -82,7 +82,7 @@ void Robot::publish(const builtin_interfaces::msg::Time &stamp,
     scan_pub->publish(scan);
   }
 
-  if(js_pub.get() && stamp.sec > joint_states->header.stamp.sec)
+  if(js_pub.get())
   {
     joint_states->header.stamp = stamp;
     js_pub->publish(*joint_states);
