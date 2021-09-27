@@ -129,8 +129,10 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
         // ROS 2 syntax
         readFrom(sensor_elem, {"plugin", "frame_name"}, scan.header.frame_id);
         readFrom(sensor_elem, {"plugin", "ros", "remapping"}, scan_topic);
-        // extract actual topic name
-        scan_topic = scan_topic.substr(7);
+        // extract actual topic name if any remapping
+        const auto remap(scan_topic.find(":="));
+        if(remap != scan_topic.npos)
+          scan_topic = scan_topic.substr(remap+2);
 
         // add prefix to scan if not here, due to frame_prefix in robot_state_publisher
         adaptNamespace(scan.header.frame_id, link_prefix);

@@ -68,8 +68,11 @@ class Robot
   {
     if(tag_sequence.size() == 0)
     {
-      std::stringstream ss(root->GetText());
-      ss >> val;
+      if(root)
+      {
+        std::stringstream ss(root->GetText());
+        ss >> val;
+      }
       return;
     }
     readFrom(root->FirstChildElement(tag_sequence.front().c_str()),
