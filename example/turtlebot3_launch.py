@@ -4,7 +4,7 @@ def generate_launch_description():
 
     sl = SimpleLauncher()
     
-    sl.declare_arg('name', default_value='waffle')
+    sl.declare_arg('name', default_value='turtlebot1')
     
     # where the robot is spawned
     x = 1.

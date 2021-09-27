@@ -6,6 +6,15 @@
 namespace map_simulator
 {
 
+void adaptNamespace(std::string &topic, std::string ns)
+{
+  if(ns[0] == '/')
+    ns = ns.substr(1);
+
+  if(topic.rfind(ns, 0) != 0)
+    topic = ns + topic;
+}
+
 // robot-agnostic helpers
 urdf::Model getModel(const std::string &urdf_xml)
 {
@@ -20,7 +29,7 @@ std::tuple<std::string, std::string, bool> decomposeBaseLink(const urdf::Model &
   auto prefix_length(base_link.find("base_"));
 
   if(prefix_length != base_link.npos)
-    return {base_link, base_link.substr(0, prefix_length), true};
+    return {base_link.substr(prefix_length, base_link.npos), base_link.substr(0, prefix_length), true};
   else
     return {base_link, "", false};
 }
@@ -93,7 +102,7 @@ std::pair<std::string,char> Robot::initFromURDF(bool force_scanner, bool zero_jo
   return {robot_namespace,id};
 }
 
-std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml)
+std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml, const std::string &link_prefix)
 {
   uint samples(100);
   std::string scan_topic("scan");
@@ -117,8 +126,14 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
         readFrom(sensor_elem, {"ray", "scan", "horizontal", "max_angle"}, scan.angle_max);
         readFrom(sensor_elem, {"ray", "range", "min"}, scan.range_min);
         readFrom(sensor_elem, {"ray", "range", "max"}, scan.range_max);
-        readFrom(sensor_elem, {"plugin", "frameName"}, scan.header.frame_id);
-        readFrom(sensor_elem, {"plugin", "topicName"}, scan_topic);
+        // ROS 2 syntax
+        readFrom(sensor_elem, {"plugin", "frame_name"}, scan.header.frame_id);
+        readFrom(sensor_elem, {"plugin", "ros", "remapping"}, scan_topic);
+        // extract actual topic name
+        scan_topic = scan_topic.substr(7);
+
+        // add prefix to scan if not here, due to frame_prefix in robot_state_publisher
+        adaptNamespace(scan.header.frame_id, link_prefix);
         return {true, samples, scan_topic};
       }
     }
@@ -138,11 +153,14 @@ void Robot::loadModel(const std::string &urdf_xml,
   if(!base_link_standard)
   {
     RCLCPP_WARN(sim_node->get_logger(), "Description in namespace ", robot_namespace.c_str(),
-                " has root link named '", base_link.c_str(), "' -> cannot detect TF prefix, should start with 'base_'");
+                " has root link named '", (tf_prefix+base_link).c_str(), "' -> cannot detect TF prefix, should start with 'base_'");
   }
 
+  // link prefix is either tf_prefix if any, or robot namespace
+  const auto link_prefix{tf_prefix.size() ? tf_prefix : robot_namespace.substr(1, robot_namespace.npos)};
+
   // try to find laser scanner as Gazebo plugin
-  auto [scan_init, samples, scan_topic] = parseLaser(urdf_xml); {}
+  auto [scan_init, samples, scan_topic] = parseLaser(urdf_xml, link_prefix); {}
 
   // finalize scan message + publisher
   if(scan_init || force_scanner)
@@ -153,19 +171,20 @@ void Robot::loadModel(const std::string &urdf_xml,
       scan.angle_min = -scan.angle_max;
       scan.range_min = 0.1;
       scan.range_max = 5;
-      scan.header.frame_id = base_link;
+      scan.header.frame_id = link_prefix + base_link;
     }
     scan.angle_increment = (scan.angle_max-scan.angle_min)/samples;
     scan.angle_max -= scan.angle_increment;
     scan.ranges.resize(samples, 0.);
     if(scan_topic[0] == '/')
       scan_topic = scan_topic.substr(1, scan_topic.npos);
-    scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>(robot_namespace + scan_topic,10);
+    adaptNamespace(scan_topic, robot_namespace);
+    scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>(scan_topic,10);
   }
 
   odom_pub = sim_node->create_publisher<nav_msgs::msg::Odometry>(robot_namespace + "odom", 10);
-  odom.header.frame_id = transform.header.frame_id = tf_prefix + "odom";
-  odom.child_frame_id = transform.child_frame_id = base_link;
+  odom.header.frame_id = transform.header.frame_id = link_prefix + "odom";
+  odom.child_frame_id = transform.child_frame_id = link_prefix + base_link;
 
   // cmd vel subscriber
   cmd_sub = sim_node->create_subscription<geometry_msgs::msg::Twist>
@@ -178,7 +197,7 @@ void Robot::loadModel(const std::string &urdf_xml,
 });
 
   // get offset between base link and scanner
-  if(scan_pub.get() && scan.header.frame_id != base_link)
+  if(scan_pub.get() && scan.header.frame_id != link_prefix + base_link)
   {
     tf2_ros::Buffer tfBuffer(sim_node->get_clock());
     tf2_ros::TransformListener tfListener(tfBuffer);
@@ -243,7 +262,7 @@ void Robot::move(double dt)
   // update real pose with perfect velocity command  
   auto &vx(odom.twist.twist.linear.x);
   auto &vy(odom.twist.twist.linear.y);
-  auto &wz(odom.twist.twist.angular.z);
+  auto &wz(odom.twist.twist.angular.z); 
 
   pose.updateFrom(vx, vy, wz, dt);
 

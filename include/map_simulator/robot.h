@@ -77,7 +77,7 @@ class Robot
              val);
   }
 
-  std::tuple<bool, uint, std::string> parseLaser(const std::string &urdf_xml);
+  std::tuple<bool, uint, std::string> parseLaser(const std::string &urdf_xml, const std::string &link_prefix);
 
 public:
 
