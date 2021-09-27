@@ -181,7 +181,8 @@ void Robot::loadModel(const std::string &urdf_xml,
     if(scan_topic[0] == '/')
       scan_topic = scan_topic.substr(1, scan_topic.npos);
     adaptNamespace(scan_topic, robot_namespace);
-    scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>(scan_topic,10);
+    scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>
+               (scan_topic,rclcpp::SensorDataQoS());
   }
 
   odom_pub = sim_node->create_publisher<nav_msgs::msg::Odometry>(robot_namespace + "odom", 10);
