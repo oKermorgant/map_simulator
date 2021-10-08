@@ -34,6 +34,8 @@ This node takes the following arguments, which reflect the request part of a `Sp
 
 If a Gazebo laser plugin is found, the laser scans will be published with the same specifications.
 
+If a robot is spawned twice in the same workspace, the previous one will be removed.
+
 ## Unspawning robots
 
 Just double-clic on the robot you want to remove. It cannot be done if `display` was set to False.
