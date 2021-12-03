@@ -14,8 +14,15 @@
 #include <tinyxml.h>
 #include <random>
 
+#ifdef WITH_ANCHORS
+#include <anchor_msgs/msg/range_with_covariance.hpp>
+#include <map_simulator/srv/add_anchor.hpp>
+#endif
+
 namespace map_simulator
 {
+
+using Anchor = srv::AddAnchor::Request;
 
 struct Pose2D
 {
@@ -36,6 +43,7 @@ class Robot
   static char n_robots;
   static std::default_random_engine random_engine;
   static std::normal_distribution<double> unit_noise;
+  static builtin_interfaces::msg::Time stamp;
   char id;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr description_sub;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
@@ -57,7 +65,18 @@ class Robot
   bool zero_joints = false;
   sensor_msgs::msg::JointState::SharedPtr joint_states;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
-  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_br;
+  static std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_br;
+  static inline void initStaticTfBr()
+  {
+    if(!static_tf_br.get())
+      static_tf_br = std::make_unique<tf2_ros::StaticTransformBroadcaster>(sim_node);
+  }
+
+  // anchors stuff
+#ifdef WITH_ANCHORS
+  rclcpp::Publisher<anchor_msgs::msg::RangeWithCovariance>::SharedPtr range_pub;
+  anchor_msgs::msg::RangeWithCovariance rangeFrom(const Anchor &anchor);
+#endif
 
   void loadModel(const std::string &urdf_xml, bool force_scanner, bool zero_joints, bool static_tf);
 
@@ -125,7 +144,7 @@ public:
       poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
                         pos_pix.y + diagonal*sin(corner_angle));
     }
-  return poly;
+    return poly;
   }
 
   bool collidesWith(int u, int v) const;
@@ -136,8 +155,19 @@ public:
 
   // shared among robots
   static rclcpp::Node* sim_node;
+  inline static void refreshStamp() {stamp = sim_node->get_clock()->now();}
+  inline static void publishStaticTF(const geometry_msgs::msg::TransformStamped &tr)
+  {
+    initStaticTfBr();
+    static_tf_br->sendTransform(tr);
+  }
 
   void move(double dt);
+
+  // anchors stuff
+#ifdef WITH_ANCHORS
+  void publishRanges(const std::vector<Anchor> &anchors);
+#endif  
 
   bool connected() const
   {
@@ -149,7 +179,7 @@ public:
     return scan_pub.get();
   }
 
-  void publish(const builtin_interfaces::msg::Time &stamp, tf2_ros::TransformBroadcaster *br);
+  void publish(tf2_ros::TransformBroadcaster &br);
 };
 
 }

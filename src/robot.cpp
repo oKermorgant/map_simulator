@@ -49,6 +49,8 @@ rclcpp::Node* Robot::Robot::sim_node;
 char Robot::n_robots = 0;
 std::default_random_engine Robot::random_engine;
 std::normal_distribution<double> Robot::unit_noise(0,1);
+builtin_interfaces::msg::Time Robot::stamp;
+std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
 
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
   : id(n_robots++), robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
@@ -62,8 +64,7 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_cir
     this->robot_namespace += '/';
 }
 
-void Robot::publish(const builtin_interfaces::msg::Time &stamp,
-             tf2_ros::TransformBroadcaster *br)
+void Robot::publish(tf2_ros::TransformBroadcaster &br)
 {
   odom.header.stamp = transform.header.stamp = stamp;
 
@@ -74,7 +75,7 @@ void Robot::publish(const builtin_interfaces::msg::Time &stamp,
   transform.transform.translation.x = odom.pose.pose.position.x;
   transform.transform.translation.y = odom.pose.pose.position.y;
   transform.transform.rotation = odom.pose.pose.orientation;
-  br->sendTransform(transform);
+  br.sendTransform(transform);
 
   if(hasLaser())
   {
@@ -244,7 +245,6 @@ void Robot::loadModel(const std::string &urdf_xml,
 
   if(static_tf)
   {
-    static_tf_br = std::make_unique<tf2_ros::StaticTransformBroadcaster>(sim_node);
     geometry_msgs::msg::TransformStamped odom2map;
     odom2map.header.stamp = sim_node->now();
     odom2map.header.frame_id = "map";
@@ -253,7 +253,7 @@ void Robot::loadModel(const std::string &urdf_xml,
     odom2map.transform.translation.y = pose.y;
     odom2map.transform.rotation.z = sin(pose.theta/2);
     odom2map.transform.rotation.w = cos(pose.theta/2);
-    static_tf_br->sendTransform(odom2map);
+    publishStaticTF(odom2map);
   }
 
   // stop listening to robot_description, we got what we wanted
@@ -306,5 +306,32 @@ void Robot::display(cv::Mat &img) const
     return;
   }
   cv::fillConvexPoly(img, contour(), color);
+}
+
+anchor_msgs::msg::RangeWithCovariance Robot::rangeFrom(const Anchor &anchor)
+{
+  anchor_msgs::msg::RangeWithCovariance range;
+  range.header.stamp = stamp;
+  range.header.frame_id = "map";
+  range.child_frame_id = anchor.frame;
+  range.range_max = anchor.range_max;
+  range.range_min = anchor.range_min;
+  range.covariance = anchor.covariance;
+  const auto dx{anchor.x-pose.x};
+  const auto dy{anchor.y-pose.y};
+  range.range = sqrt(dx*dx + dy*dy) * (1+anchor.covariance*unit_noise(random_engine));
+  return range;
+}
+
+void Robot::publishRanges(const std::vector<Anchor> &anchors)
+{
+  if(anchors.empty())
+    return;
+  if(!range_pub)
+    range_pub = sim_node->create_publisher<anchor_msgs::msg::RangeWithCovariance>
+                (robot_namespace + "ranges", 10);
+
+  for(const auto &anchor: anchors)
+    range_pub->publish(rangeFrom(anchor));
 }
 }

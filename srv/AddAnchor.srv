@@ -1,0 +1,8 @@
+string frame
+float64 x 0.
+float64 y 0.
+float64 covariance 0.01         # published covariance
+float64 covariance_real 0.01    # real covariance
+float64 range_min 0.
+float64 range_max 100.
+---

@@ -20,9 +20,17 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PkgConfig)
 
+find_package(anchor_msgs)
 
+set(anchor_pkg "")
+set(anchor_exec "")
+if(${anchor_msgs_FOUND})
+    add_definitions(-DWITH_ANCHORS)
+    set(anchor_pkg "anchor_msgs")
+    set(anchor_exec "add_anchor")
+endif()
 
-rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv")
+rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv" "srv/AddAnchor.srv")
 
 pkg_check_modules(YamlCpp yaml-cpp)
 
@@ -31,12 +39,18 @@ target_include_directories(simulator_node PRIVATE include
                            ${OpenCV_INCLUDE_DIRS}
                            ${YamlCpp_INCLUDE_DIRS})
 target_link_libraries(simulator_node ${OpenCV_LIBRARIES} yaml-cpp stdc++fs)
-ament_target_dependencies(simulator_node rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf)
+ament_target_dependencies(simulator_node rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ${anchor_pkg})
 rosidl_target_interfaces(simulator_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(spawn src/spawn.cpp)
 ament_target_dependencies(spawn rclcpp)
 rosidl_target_interfaces(spawn ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+if(${anchor_msgs_FOUND})
+    add_executable(add_anchor src/add_anchor.cpp)
+    ament_target_dependencies(add_anchor rclcpp)
+    rosidl_target_interfaces(add_anchor ${PROJECT_NAME} "rosidl_typesupport_cpp")
+endif()
 
 if(NOT WIN32)
   ament_environment_hooks(
@@ -49,12 +63,11 @@ rclcpp_components_register_node(simulator_node
   PLUGIN "map_simulator::SimulatorNode"
   EXECUTABLE simulator)
 
-install(TARGETS simulator_node
+install(TARGETS simulator_node spawn ${anchor_exec}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  RUNTIME DESTINATION lib/${PROJECT_NAME})
   
-install(TARGETS spawn DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch example
   DESTINATION share/${PROJECT_NAME}) 
   

@@ -8,7 +8,6 @@ using namespace  std::chrono;
 SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
   : rclcpp::Node("simulator", options), br(*this)
 {
-
   Robot::sim_node = this;
   dt = 1./declare_parameter("rate", 20);
 
@@ -34,13 +33,20 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
   {refresh(now());});
 
   spawn_srv = create_service<Spawn>
-      ("/simulator/spawn", [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr response)
+              ("/simulator/spawn", [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr )
   {
     addRobot(*request.get());
-    (void) response;
   });
-}
 
+#ifdef WITH_ANCHORS
+  anchor_srv = create_service<srv::AddAnchor>
+              ("/simulator/add_anchor", [&](const srv::AddAnchor::Request::SharedPtr anchor,
+                                          srv::AddAnchor::Response::SharedPtr)
+  {
+    addAnchor(*anchor);
+  });
+#endif
+}
 
 void SimulatorNode::addRobot(const Spawn::Request &spec)
 {
@@ -58,7 +64,6 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   // remove any robot with same namespace (unless obstacle)
   robots.remove_if([=](const Robot &robot)
   {return robot.isTwin(new_robot);});
-
 }
 
 void SimulatorNode::removeRobotAt(int x, int y)
@@ -67,12 +72,41 @@ void SimulatorNode::removeRobotAt(int x, int y)
   {return robot.collidesWith(x,y);});
 }
 
+#ifdef WITH_ANCHORS
+void SimulatorNode::addAnchor(const Anchor &anchor)
+{
+  auto twin = std::find_if(anchors.begin(), anchors.end(),
+                           [anchor](const auto &other){return anchor.frame == other.frame;});
+  if(twin != anchors.end())
+  {
+    RCLCPP_WARN(get_logger(), "Cannot add " + anchor.frame + ": already exists");
+    return;
+  }
+
+  anchors.push_back(anchor);
+  geometry_msgs::msg::TransformStamped anchor_tf;
+  anchor_tf.header.stamp = now();
+  anchor_tf.header.frame_id = "map";
+  anchor_tf.child_frame_id = anchor.frame + "_gt";
+  anchor_tf.transform.translation.x = anchor.x;
+  anchor_tf.transform.translation.y = anchor.y;
+  Robot::publishStaticTF(anchor_tf);
+}
+#endif
+
 void SimulatorNode::refresh(const rclcpp::Time &now)
 {
+  Robot::refreshStamp();
+
   for(auto &robot: robots)
   {
     if(robot.connected())
+    {
       robot.move(dt);
+#ifdef WITH_ANCHORS
+      robot.publishRanges(anchors);
+#endif
+    }
   }
 
   grid.computeLaserScans(robots);
@@ -82,7 +116,7 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
     for(auto &robot: robots)
     {
       if(robot.connected())
-        robot.publish(now, &br);
+        robot.publish(br);
     }
     last_tf = now.nanoseconds();
   }
