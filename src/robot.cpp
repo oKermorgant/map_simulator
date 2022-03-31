@@ -16,10 +16,10 @@ void adaptNamespace(std::string &topic, std::string ns)
 }
 
 // robot-agnostic helpers
-urdf::Model getModel(const std::string &urdf_xml)
+std::unique_ptr<const urdf::Model> getModel(const std::string &urdf_xml)
 {
-  urdf::Model model;
-  model.initString(urdf_xml);
+  auto model{std::make_unique<urdf::Model>()};
+  model->initString(urdf_xml);
   return model;
 }
 
@@ -152,11 +152,13 @@ void Robot::loadModel(const std::string &urdf_xml,
   const auto model(getModel(urdf_xml));
 
   // create odom publisher + tf broadcaster
-  const auto [base_link, tf_prefix, base_link_standard] = decomposeBaseLink(model); {}
+  const auto [base_link, tf_prefix, base_link_standard] = decomposeBaseLink(*model); {}
   if(!base_link_standard)
   {
-    RCLCPP_WARN(sim_node->get_logger(), "Description in namespace ", robot_namespace.c_str(),
-                " has root link named '", (tf_prefix+base_link).c_str(), "' -> cannot detect TF prefix, should start with 'base_'");
+    RCLCPP_WARN(sim_node->get_logger(), 
+                "Description in namespace %s has root link named '%s' -> cannot detect TF prefix, should start with 'base_'",
+                robot_namespace.c_str(),
+                (tf_prefix+base_link).c_str());
   }
 
   // link prefix is either tf_prefix if any, or robot namespace
@@ -230,7 +232,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   {
     // check if there are actually non-fixed joints
     joint_states = std::make_shared<sensor_msgs::msg::JointState>();
-    joint_states->name = getVaryingJoints(model);
+    joint_states->name = getVaryingJoints(*model);
     if(joint_states->name.size() == 0)
     {
       // pointless
@@ -308,20 +310,23 @@ void Robot::display(cv::Mat &img) const
   cv::fillConvexPoly(img, contour(), color);
 }
 
+#ifdef WITH_ANCHORS
 anchor_msgs::msg::RangeWithCovariance Robot::rangeFrom(const Anchor &anchor)
 {
   anchor_msgs::msg::RangeWithCovariance range;
   range.header.stamp = stamp;
-  range.header.frame_id = "map";
-  range.child_frame_id = anchor.frame;
+  range.header.frame_id = anchor.frame;
+  range.moving_frame = transform.child_frame_id;  // assume receiver is placed on base link
   range.range_max = anchor.range_max;
-  range.range_min = anchor.range_min;
-  range.covariance = anchor.covariance;
+  range.range_min = anchor.range_min;  
   const auto dx{anchor.x-pose.x};
   const auto dy{anchor.y-pose.y};
-  range.range = sqrt(dx*dx + dy*dy) * (1+anchor.covariance*unit_noise(random_engine));
+  const auto real_range{sqrt(dx*dx + dy*dy)};
+  range.range = real_range * (1+anchor.covariance_factor_real*unit_noise(random_engine));
+  range.covariance = anchor.covariance_factor * real_range;
   return range;
 }
+
 
 void Robot::publishRanges(const std::vector<Anchor> &anchors)
 {
@@ -334,4 +339,6 @@ void Robot::publishRanges(const std::vector<Anchor> &anchors)
   for(const auto &anchor: anchors)
     range_pub->publish(rangeFrom(anchor));
 }
+#endif
+
 }

@@ -8,7 +8,8 @@ def generate_launch_description():
     sl.declare_arg('y',0.,'y-position of the anchor')
     sl.declare_arg('range_min',0.,'Min range')
     sl.declare_arg('range_max',100.,'Max range')
-    sl.declare_arg('covariance',0.01,'covariance of the anchor range')
+    sl.declare_arg('covariance',0.01,'covariance factor of the anchor range')
+    sl.declare_arg('covariance_real',0.01,'real covariance factor of the anchor range')
     sl.declare_arg('publish_gt',True,'Publish real anchor position')
     
     parameters = sl.arg_map(('frame','x','y','range_min','range_max','covariance'))

@@ -26,7 +26,8 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
       if(event != cv::EVENT_LBUTTONDBLCLK)
         return;
       ((SimulatorNode*)node_ptr)->removeRobotAt(x, y);
-    }, this);
+    },
+    this);
   }
 
   refresh_timer = create_wall_timer(milliseconds((long)(1000*dt)), [&]()
@@ -35,7 +36,7 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
   spawn_srv = create_service<Spawn>
               ("/simulator/spawn", [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr )
   {
-    addRobot(*request.get());
+    addRobot(*request);
   });
 
 #ifdef WITH_ANCHORS
@@ -79,7 +80,7 @@ void SimulatorNode::addAnchor(const Anchor &anchor)
                            [anchor](const auto &other){return anchor.frame == other.frame;});
   if(twin != anchors.end())
   {
-    RCLCPP_WARN(get_logger(), "Cannot add " + anchor.frame + ": already exists");
+    RCLCPP_WARN(get_logger(), "Cannot add %s: already exists", + anchor.frame.c_str());
     return;
   }
 

@@ -16,7 +16,8 @@ int main(int argc, char** argv)
   request->frame = node->declare_parameter("frame", "anchor");
   request->x = node->declare_parameter("x", 0.);
   request->y = node->declare_parameter("y", 0.);
-  request->covariance = node->declare_parameter("covariance", request->covariance);
+  request->covariance_factor = node->declare_parameter("covariance", request->covariance_factor);
+  request->covariance_factor_real = node->declare_parameter("covariance_real", request->covariance_factor_real);
   request->range_min = node->declare_parameter("range_min", request->range_min);
   request->range_max = node->declare_parameter("range_max", request->range_max);
 
@@ -31,8 +32,8 @@ int main(int argc, char** argv)
     RCLCPP_ERROR(node->get_logger(), "service call failed :(");
     return 1;
   }
-  auto result = result_future.get();
-  RCLCPP_INFO(node->get_logger(), "successfully added anchor ", request->frame.c_str());
+  [[maybe_unused]] auto result = result_future.get();
+  RCLCPP_INFO(node->get_logger(), "successfully added anchor %s", request->frame.c_str());
   rclcpp::shutdown();
   return 0;
 }
