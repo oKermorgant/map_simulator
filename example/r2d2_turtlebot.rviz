@@ -6,9 +6,11 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Map1/Status1
         - /Map1/Topic1
         - /Map1/Update Topic1
         - /RobotModel-Tbot1/Description Topic1
+        - /LaserScan-R2D21/Topic1
       Splitter Ratio: 0.5
     Tree Height: 754
   - Class: rviz_common/Selection
@@ -45,6 +47,65 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        r2d2/base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        r2d2/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/box:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/head:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/left_back_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/left_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/left_front_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/left_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/right_back_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/right_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/right_front_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        r2d2/right_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel-R2D2
       TF Prefix: ""
       Update Interval: 0
@@ -59,6 +120,7 @@ Visualization Manager:
       Topic:
         Depth: 1
         Durability Policy: Transient Local
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /map
@@ -88,57 +150,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        turtlebot1/base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turtlebot1/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/camera_rgb_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turtlebot1/camera_rgb_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turtlebot1/caster_back_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/caster_back_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turtlebot1/wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turtlebot1/wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel-Tbot
       TF Prefix: ""
       Update Interval: 0
@@ -171,8 +182,9 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /r2d2/scan
       Use Fixed Frame: true
       Use rainbow: true
@@ -204,6 +216,7 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /turtlebot1/scan
@@ -225,6 +238,9 @@ Visualization Manager:
     - Class: rviz_default_plugins/Measure
       Line color: 128; 128; 0
     - Class: rviz_default_plugins/SetInitialPose
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.06853891909122467
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -253,25 +269,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 8.128125190734863
+      Distance: 15.139144897460938
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.5589717030525208
-        Y: -0.20908653736114502
-        Z: 0.0934738963842392
+        X: 0.9380419254302979
+        Y: -1.2310858964920044
+        Z: -0.7650570273399353
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5253985524177551
+      Pitch: 0.8053983449935913
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.1235880851745605
+      Yaw: 5.043588161468506
     Saved: ~
 Window Geometry:
   Displays:

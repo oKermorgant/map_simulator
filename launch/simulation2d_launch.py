@@ -8,13 +8,10 @@ def generate_launch_description():
     sl.declare_arg('max_width', default_value=1200)
     sl.declare_arg('rate', default_value=20)
     sl.declare_arg('map_server', default_value=False)
+    sl.declare_arg('display', default_value=True)
     
-    node_params = {}
-    node_params['map'] = sl.arg('map')
-    node_params['max_height'] = sl.arg('max_height')
-    node_params['max_width'] = sl.arg('max_width')
-    node_params['rate'] = sl.arg('rate')
-    sl.node('map_simulator', 'simulator', parameters = node_params, output='screen')
+    sl.node('map_simulator', 'simulator', 
+            parameters = sl.arg_map(('map', 'max_height', 'max_width', 'rate', 'display')))
     
     with sl.group(if_arg='map_server'):
         sl.node('nav2_map_server','map_server',name='map_server',
