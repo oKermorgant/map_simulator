@@ -32,6 +32,15 @@ endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv" "srv/AddAnchor.srv")
 
+if("$ENV{ROS_DISTRO}" STREQUAL "galactic" OR "$ENV{ROS_DISTRO}" STREQUAL "foxy")
+    set(LEGACY_IDL TRUE)
+else()
+    set(LEGACY_IDL FALSE)
+endif()
+if(NOT ${LEGACY_IDL})
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+endif()
+
 pkg_check_modules(YamlCpp yaml-cpp)
 
 add_library(simulator_node SHARED src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
@@ -40,17 +49,30 @@ target_include_directories(simulator_node PRIVATE include
                            ${YamlCpp_INCLUDE_DIRS})
 target_link_libraries(simulator_node ${OpenCV_LIBRARIES} yaml-cpp stdc++fs)
 ament_target_dependencies(simulator_node rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ${anchor_pkg})
-rosidl_target_interfaces(simulator_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+if(${LEGACY_IDL})
+    rosidl_target_interfaces(simulator_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+else()
+    target_link_libraries(simulator_node "${cpp_typesupport_target}")
+endif()
 
 add_executable(spawn src/spawn.cpp)
 ament_target_dependencies(spawn rclcpp)
-rosidl_target_interfaces(spawn ${PROJECT_NAME} "rosidl_typesupport_cpp")
+if(${LEGACY_IDL})
+    rosidl_target_interfaces(spawn ${PROJECT_NAME} "rosidl_typesupport_cpp")
+else()
+    target_link_libraries(spawn "${cpp_typesupport_target}")
+endif()
 
 if(${anchor_msgs_FOUND})
     add_executable(add_anchor src/add_anchor.cpp)
     ament_target_dependencies(add_anchor rclcpp)
-    rosidl_target_interfaces(add_anchor ${PROJECT_NAME} "rosidl_typesupport_cpp")
+    if(${LEGACY_IDL})
+        rosidl_target_interfaces(add_anchor ${PROJECT_NAME} "rosidl_typesupport_cpp")
+    else()
+        target_link_libraries(add_anchor "${cpp_typesupport_target}")
+    endif()
 endif()
+
 
 if(NOT WIN32)
   ament_environment_hooks(
