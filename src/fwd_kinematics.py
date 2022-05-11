@@ -102,8 +102,8 @@ class Bicycle(Robot):
         beta = self.state.position[2]
 
         # Twist
-        self.cmd_vel.angular.z = v * np.sin(beta) / self.L
         self.cmd_vel.linear.x = v * np.cos(beta)
+        self.cmd_vel.angular.z = v * np.sin(beta) / self.L        
         
         # wheel velocities
         wf = v/self.r
@@ -121,10 +121,33 @@ class TwoSteering(Robot):
         self.L = L
         self.r = r
         self.set_params(['L','r'])
+        self.front = front
+        self.rear = rear
+        self.beta1 = beta1
+        self.beta2 = beta2
         
-        
-        
+    def update(self):
+        # got (v, beta dot) in self.cmd
+        v1, bdot1, bdot2 = self.cmd
+        beta1,beta2 = self.state.position[2:4]
+        c1,s1 = np.cos(beta1), np.sin(beta1)
+        c2,s2 = np.cos(beta2), np.sin(beta2)
+        v2 = v1*c1/c2        
+
+        # Twist
+        self.cmd_vel.linear.x = v1 * c1
+        self.cmd_vel.linear.y = v2 * s2
+        self.cmd_vel.angular.z = (v1*s1-v2*s2) / self.L
                 
+        # wheel velocities
+        wf = v1/self.r
+        wr = v2/self.r
+                
+        for idx, joint, vel in ((0, self.front, wf),
+                                (1, self.rear, wr),
+                                (2, self.beta1, bdot1),
+                                (3, self.beta2, bdot2)):
+            self.state.position[idx] = joint.move(self.state.position[idx], vel)
     
 def create_robot():
     from urdf_parser_py.urdf import URDF
@@ -234,7 +257,7 @@ def create_robot():
     
     # two-steering
     beta1, beta2 = Joint.identify(steering, 'x')
-    return Bicycle([front.name, rear.name, beta1.name, beta2.name],
+    return TwoSteering([front.name, rear.name, beta1.name, beta2.name],
                        Wheel(front),
                        Wheel(rear),
                        SteeringJoint(beta1),
