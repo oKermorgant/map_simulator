@@ -46,6 +46,21 @@ By default, the `scan` topic is used to publish laser scans, unless another topi
 
 The `spawn` node will spawn anything at the requested pose / size. If no `robot_description` parameter is found, `cmd_vel` and `scan` topics will not be initialized but the spawned entity will be detected in the laser scans of other robots.
 
+## Using steering wheels robots
+
+A helper node `fwd_kinematics.py` is available to link the command and the current joint state, especially for bicycle and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to get the robot type (unicycle / bicycle / two-steering). 
+
+ - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels 
+ - for other robots, it subscribes to `cmd` of type `std_msgs/Float32MultiArray`. This topic is assumed to be the one used for low-level control:
+    - `(front wheel velocity, steering velocity)` for bicycle robots
+    - `(front wheel velocity, front steering velocity, rear steering velocity)` for two-steering robots
+    
+The node will publish the corresponding `joint_states` and, if `~pub_cmd` is `True` it will also publish the corresponding Twist.
+
+It will also set the `(~b, ~r)` (unicycle) or `(~L, ~r)` (other) parameters that are the wheel distance and radius parsed from `robot_description`.
+
+This allows testing high-lever controllers for steering wheels robots.
+
 ## Examples
 
 See the `example` folder to see how to:

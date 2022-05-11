@@ -141,6 +141,11 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
         readFrom(sensor_elem, {"ray", "range", "max"}, scan.range_max);
         readFrom(sensor_elem, {"plugin", "frameName"}, scan.header.frame_id);
         readFrom(sensor_elem, {"plugin", "topicName"}, scan_topic);
+        if(std::equal(robot_namespace.begin(), robot_namespace.end(), scan_topic.begin()))
+        {
+          // prefix already in URDF, remove it
+          scan_topic = scan_topic.substr(robot_namespace.size(), scan_topic.npos);
+        }
         return {true, samples, scan_topic};
       }
     }
