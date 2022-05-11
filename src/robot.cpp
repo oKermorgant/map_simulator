@@ -57,6 +57,7 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_cir
 {
   odom.twist.covariance.front() = linear_noise*linear_noise;
   odom.twist.covariance.back() = angular_noise*angular_noise;
+  odom.pose.pose.orientation.w = 1;
 
   if(robot_namespace.back() != '/')
     this->robot_namespace += '/';
