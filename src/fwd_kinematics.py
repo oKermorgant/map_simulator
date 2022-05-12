@@ -210,12 +210,7 @@ def create_robot():
             
             # get horizontal (wheel + sign) / vertical
             self.axis = to_list(M[:3,:3] * np.matrix(joint.axis).T)
-            if np.allclose(self.axis, [0,1,0]):
-                self.wheel_sign = 1
-            elif np.allclose(self.axis, [0,-1,0]):
-                self.wheel_sign = -1
-            else:
-                self.wheel_sign = 0
+            self.wheel_sign = min((-1,0,1), key = lambda y: abs(y-self.axis[1]))
 
     # parse model, guess role of each joint
     joints = []
