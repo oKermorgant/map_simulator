@@ -93,5 +93,8 @@ install(TARGETS simulator_node spawn ${anchor_exec}
 install(DIRECTORY launch example
   DESTINATION share/${PROJECT_NAME}) 
   
+install(PROGRAMS src/kinematics.py 
+    DESTINATION lib/${PROJECT_NAME})
+  
 ament_export_libraries(simulator_node)
 ament_package()

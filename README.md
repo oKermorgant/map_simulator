@@ -58,6 +58,21 @@ If the package `anchor_msgs` is available at compile-time then the simulator can
 
 As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace.
 
+## Using steering wheels robots
+
+A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to get the robot type (unicycle / bicycle / two-steering). 
+
+ - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels 
+ - for other robots, it subscribes to `cmd` of type `std_msgs/Float32MultiArray`. This topic is assumed to be the one used for low-level control:
+    - `(front wheel velocity, steering velocity)` for bicycle robots
+    - `(front wheel velocity, front steering velocity, rear steering velocity)` for two-steering robots
+    
+The node will publish the corresponding `joint_states` and, if the parameter `pub_cmd` is `True` it will also publish the corresponding Twist.
+
+It will also set the `(b, r)` (unicycle) or `(L, ~)` (other) parameters that are the wheel distance and radius parsed from `robot_description`.
+
+This allows testing high-lever controllers for steering wheels robots.
+
 ## Examples
 
 See the `example` folder to see how to:
