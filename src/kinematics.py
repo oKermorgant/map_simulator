@@ -163,7 +163,7 @@ def create_robot():
     from rcl_interfaces.srv import GetParameters
     from urdf_parser_py.urdf import URDF
     node = Node('rsp_client')
-    client = node.create_client(GetParameters, '/turtlebot1/robot_state_publisher/get_parameters')
+    client = node.create_client(GetParameters, 'robot_state_publisher/get_parameters')
     client.wait_for_service()
     req = GetParameters.Request()
     req.names = ['robot_description']
@@ -236,13 +236,9 @@ def create_robot():
             self.wheel_sign = min((-1,0,1), key = lambda y: abs(y-self.axis[1]))
 
     # parse model, guess role of each joint
-    joints = []
-
-    for joint in model.joints:                
-        if joint.type in ('continuous','revolute'):
-            joints.append(Joint(joint))
+    joints = [Joint(joint) for joint in model.joints if joint.type in ('continuous','revolute')]
             
-    # identify wheels
+    # identify wheels vs steering joints
     wheels = [joint for joint in joints if joint.wheel_sign]
     steering = [joint for joint in joints if not joint.wheel_sign]
     
@@ -252,6 +248,7 @@ def create_robot():
             msg.append(f'  - {j.name} at {j.pos} with axis {j.axis}')        
         raise(RuntimeError('\n'.join(msg)))
     
+    # we assume the wheels have the same radius
     r = 0.5* (wheels[0].z + wheels[1].z)
             
     if len(steering) == 0:
