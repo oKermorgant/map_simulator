@@ -22,8 +22,10 @@
 
 namespace map_simulator
 {
-
+    
+#ifdef WITH_ANCHORS   
 using Anchor = srv::AddAnchor::Request;
+#endif
 
 struct Pose2D
 {
