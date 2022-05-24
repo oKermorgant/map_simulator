@@ -19,7 +19,7 @@ def generate_launch_description():
         # spawn in robot namespace to get robot_description
         # make robot darker than its laser
         robot_color = sl.py_eval("[c//2 for c in ", sl.arg('color'), ']')
-        sl.node('map_simulator', 'spawn', parameters = [{'radius': 0.4, 'shape': 'square', 'robot_color': robot_color, 'laser_color': sl.arg('color'), 'static_tf_odom': True}])
+        sl.node('map_simulator', 'spawn', parameters = {'radius': 0.4, 'shape': 'square', 'robot_color': robot_color, 'laser_color': sl.arg('color'), 'static_tf_odom': True})
         
 
     return sl.launch_description()

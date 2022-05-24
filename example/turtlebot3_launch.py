@@ -23,7 +23,7 @@ def generate_launch_description():
         # spawn in robot namespace to get robot_description
         
         
-        sl.node('map_simulator', 'spawn', parameters = [{'zero_joints': zero_joints, 'static_tf_odom': True, 'radius': .2, 'x': x, 'robot_color': [50,50,50], 'laser_color': [0,255,0]}])
+        sl.node('map_simulator', 'spawn', parameters = {'zero_joints': zero_joints, 'static_tf_odom': True, 'radius': .2, 'x': x, 'robot_color': [50,50,50], 'laser_color': [0,255,0]})
         
         with sl.group(if_arg='sim_wheels'):
             sl.node('map_simulator', 'kinematics.py')
