@@ -57,9 +57,6 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_cir
     pose{_pose}, linear_noise(_linear_noise), angular_noise(_angular_noise),
     laser_color(_laser_color), color(_color), radius(_radius)
 {
-  odom.twist.covariance.front() = linear_noise*linear_noise;
-  odom.twist.covariance.back() = angular_noise*angular_noise;
-
   if(robot_namespace.back() != '/')
     this->robot_namespace += '/';
 }
@@ -196,7 +193,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   cmd_sub = sim_node->create_subscription<geometry_msgs::msg::Twist>
       (robot_namespace + "cmd_vel", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
   {
-      // save perfect command velocities here
+      // save perfect command velocities in odom anyway
       odom.twist.twist.linear.x = msg->linear.x;
       odom.twist.twist.linear.y = msg->linear.y;
       odom.twist.twist.angular.z = msg->angular.z;
@@ -269,9 +266,14 @@ void Robot::move(double dt)
   auto &vy(odom.twist.twist.linear.y);
   auto &wz(odom.twist.twist.angular.z); 
 
+  // write actual covariance, proportional to velocity
+  odom.twist.covariance[0] = std::max(0.0001, std::abs(vx)*linear_noise*linear_noise);
+  odom.twist.covariance[7] = std::max(0.0001, std::abs(vy)*linear_noise*linear_noise);
+  odom.twist.covariance[35] = std::max(0.0001, std::abs(wz)*angular_noise*angular_noise);
+
   pose.updateFrom(vx, vy, wz, dt);
 
-  // add noise: command velocity to measured one
+  // add noise: command velocity to measured (odometry) one
   vx *= (1+linear_noise*unit_noise(random_engine));
   vy *= (1+linear_noise*unit_noise(random_engine));
   wz *= (1+angular_noise*unit_noise(random_engine));

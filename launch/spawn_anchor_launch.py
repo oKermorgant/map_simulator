@@ -19,8 +19,8 @@ def generate_launch_description():
     
     sl.node('map_simulator','add_anchor', parameters = parameters)
             
-    with sl.group(if_arg='publish_gt',ns='anchors'):   
-        sl.node('tf2_ros','static_transform_publisher',name=sl.name_join(sl.arg('frame'),'_tf'),
+    with sl.group(if_arg='publish_gt',ns='/anchors'):   
+        sl.node('tf2_ros','static_transform_publisher',name=sl.name_join(sl.arg('frame'), '_tf'),
             arguments = [sl.arg('x'),sl.arg('y'),'0','0','0','0','map',sl.arg('frame')])
                 
     return sl.launch_description() 

@@ -54,7 +54,7 @@ The `spawn` node will spawn anything at the requested pose / size. If no `robot_
 
 If the package `anchor_msgs` is available at compile-time then the simulator can render range measurements between the robots and some beacons put at any (x,y) position. The `spawn_anchor_launch.py` offers a simple way to spawn such anchors.
 - the real anchor positions are given as the `<name>_gt` frame under `/tf`, 
-- any localization algorithm should use the `<name>` frame, that is at the same place as `<name>_gt` if `publish_gt` is true in `spawn_anchor_launch.py`. Otherwise, some range-only SLAM node should be used to estimate the positions of the anchors.
+- any localization algorithm should use the `<name>` frame, that is at the same place as `<name>_gt` if `publish_gt` is true in `spawn_anchor_launch.py`. Otherwise, some range-only SLAM node should be used to estimate the positions of the anchors from some custom initialization.
 
 As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace.
 

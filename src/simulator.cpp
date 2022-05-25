@@ -85,6 +85,7 @@ void SimulatorNode::addAnchor(const Anchor &anchor)
   }
 
   anchors.push_back(anchor);
+  anchors.back().covariance_factor_real = sqrt(anchors.back().covariance_factor_real);
   geometry_msgs::msg::TransformStamped anchor_tf;
   anchor_tf.header.stamp = now();
   anchor_tf.header.frame_id = "map";
