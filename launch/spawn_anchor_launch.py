@@ -12,9 +12,9 @@ def generate_launch_description():
     sl.declare_arg('covariance_real',0.01,'real covariance factor of the anchor range')
     sl.declare_arg('publish_gt',True,'Publish real anchor position')
     
-    parameters = sl.arg_map(('frame','x','y','range_min','range_max','covariance'))
+    parameters = sl.arg_map(('frame','x','y','range_min','range_max','covariance','covariance_real'))
     # ensure floating points in case integers are passed
-    for name in ('x','y','range_min','range_max','covariance'):
+    for name in ('x','y','range_min','range_max','covariance','covariance_real'):
         parameters[name] = sl.py_eval('float(', sl.arg(name), ')')
     
     sl.node('map_simulator','add_anchor', parameters = parameters)
