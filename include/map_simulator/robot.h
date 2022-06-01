@@ -65,6 +65,7 @@ class Robot
   Pose2D laser_pose;
 
   // optional publishers
+  bool publish_gt{false};
   bool zero_joints = false;
   sensor_msgs::msg::JointState::SharedPtr joint_states;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
@@ -158,6 +159,7 @@ public:
 
   // shared among robots
   static rclcpp::Node* sim_node;
+  static geometry_msgs::msg::TransformStamped pose_gt;
   inline static void refreshStamp() {stamp = sim_node->get_clock()->now();}
   inline static void publishStaticTF(const geometry_msgs::msg::TransformStamped &tr)
   {

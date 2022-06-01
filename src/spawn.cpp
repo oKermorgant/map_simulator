@@ -51,8 +51,8 @@ int main(int argc, char** argv)
     RCLCPP_ERROR(node->get_logger(), "service call failed :(");
     return 1;
   }
-  auto result = result_future.get();
-  RCLCPP_INFO(node->get_logger(), "successfully spawned robot in namespace ", request->robot_namespace.c_str());
+  [[maybe_unused]] auto result = result_future.get();
+  RCLCPP_INFO(node->get_logger(), "successfully spawned robot in namespace %s", request->robot_namespace.c_str());
   rclcpp::shutdown();
   return 0;
 }

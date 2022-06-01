@@ -51,6 +51,7 @@ std::default_random_engine Robot::random_engine;
 std::normal_distribution<double> Robot::unit_noise(0,1);
 builtin_interfaces::msg::Time Robot::stamp;
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
+geometry_msgs::msg::TransformStamped Robot::pose_gt;
 
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
   : id(n_robots++), robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
@@ -84,6 +85,17 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
   {
     joint_states->header.stamp = stamp;
     js_pub->publish(*joint_states);
+  }
+
+  if(publish_gt)
+  {
+    pose_gt.child_frame_id = odom.child_frame_id + "_gt";
+    pose_gt.header.stamp = stamp;
+    pose_gt.transform.translation.x = pose.x;
+    pose_gt.transform.translation.y = pose.y;
+    pose_gt.transform.rotation.w = cos(pose.theta/2.);
+    pose_gt.transform.rotation.z = sin(pose.theta/2.);
+    br.sendTransform(pose_gt);
   }
 }
 
@@ -254,6 +266,11 @@ void Robot::loadModel(const std::string &urdf_xml,
     odom2map.transform.rotation.w = cos(pose.theta/2);
     publishStaticTF(odom2map);
   }
+  else
+  {
+    pose_gt.header.frame_id = "map";
+  }
+  publish_gt = !static_tf;
 
   // stop listening to robot_description, we got what we wanted
   description_sub.reset();
