@@ -12,7 +12,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <opencv2/core.hpp>
-#include <tinyxml.h>
+#include <tinyxml2.h>
 #include <random>
 
 #ifdef WITH_ANCHORS
@@ -85,7 +85,7 @@ class Robot
   void loadModel(const std::string &urdf_xml, bool force_scanner, bool zero_joints, bool static_tf);
 
   template <typename T>
-  static void readFrom(TiXmlElement * root,
+  static void readFrom(tinyxml2::XMLElement* root,
                        std::vector<std::string> tag_sequence,
                        T & val)
   {

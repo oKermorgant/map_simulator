@@ -117,9 +117,9 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
   uint samples(100);
   std::string scan_topic("scan");
 
-  TiXmlDocument doc;
-  doc.Parse(urdf_xml.c_str());
-  auto root = doc.RootElement();
+  tinyxml2::XMLDocument xml;
+  xml.Parse(urdf_xml.c_str());
+  const auto root{xml.RootElement()};
 
   for(auto gazebo_elem = root->FirstChildElement("gazebo");
       gazebo_elem != nullptr;
@@ -129,7 +129,7 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
         sensor_elem != nullptr;
         sensor_elem =sensor_elem->NextSiblingElement("sensor"))
     {
-      if(std::string(sensor_elem->Attribute("type")) == "ray")
+      if(strcmp(sensor_elem->Attribute("type"), "ray") == 0)
       {
         readFrom(sensor_elem, {"ray", "scan", "horizontal", "samples"}, samples);
         readFrom(sensor_elem, {"ray", "scan", "horizontal", "min_angle"}, scan.angle_min);

@@ -12,7 +12,7 @@
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>urdfdom</depend>
+  <depend>urdf</depend>
   <depend>tf2_ros</depend>
   <depend>anchor_msgs</depend>
   <depend>yaml-cpp</depend>
