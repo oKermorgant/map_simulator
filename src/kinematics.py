@@ -77,6 +77,7 @@ class Unicycle(Robot):
         self.r = r
         self.left = left
         self.right = right
+        self.mimic = len(names) == 4
         
         self.set_params(['b','r'])
         
@@ -91,9 +92,11 @@ class Unicycle(Robot):
         v = self.cmd_vel.linear.x
         w = self.cmd_vel.angular.z
         
-        for idx, joint, vel in ((0, self.left, (v+self.b*w)/self.r),
-                                (1, self.right, (v-self.b*w)/self.r)):
-            self.state.position[idx] = joint.move(self.state.position[idx], vel)        
+        for idx, joint, vel in ((0, self.left, (v-self.b*w)/self.r),
+                                (1, self.right, (v+self.b*w)/self.r)):
+            self.state.position[idx] = joint.move(self.state.position[idx], vel)
+            if self.mimic:
+                self.state.position[idx+2] = self.state.position[idx]
         
 class Bicycle(Robot):
     def __init__(self, names, front, rear, beta, L, r):
@@ -242,7 +245,7 @@ def create_robot():
     wheels = [joint for joint in joints if joint.wheel_sign]
     steering = [joint for joint in joints if not joint.wheel_sign]
     
-    if len(wheels) != 2 or len(steering) not in (0,1,2):
+    if len(wheels) not in (2,4) or len(steering) not in (0,1,2):
         msg = ['Cannot identify robot type from its joints']
         for j in joints:
             msg.append(f'  - {j.name} at {j.pos} with axis {j.axis}')        
@@ -253,8 +256,16 @@ def create_robot():
             
     if len(steering) == 0:
         # unicycle
-        left, right = Joint.identify(wheels, 'y')
-        return Unicycle([left.name, right.name], 
+        if len(wheels) == 2:
+            left, right = Joint.identify(wheels, 'y')
+            names = [left.name, right.name]
+        else:
+            left = [w for w in wheels if w.y > 0]
+            right = [w for w in wheels if w.y < 0]
+            names = [left[0].name,right[0].name,left[1].name,right[1].name]
+            left = left[0]
+            right = right[0]
+        return Unicycle(names, 
                         Wheel(left),
                         Wheel(right),
                         left.y - right.y,
