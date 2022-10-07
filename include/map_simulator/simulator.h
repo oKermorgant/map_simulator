@@ -20,7 +20,7 @@ using map_simulator::srv::Spawn;
 class SimulatorNode : public rclcpp::Node
 {
 public:
-  SimulatorNode(rclcpp::NodeOptions options);
+  SimulatorNode();
 
 protected:
   OccupancyGrid grid;

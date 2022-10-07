@@ -5,8 +5,7 @@ namespace map_simulator
 {
 
 using namespace  std::chrono;
-SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
-  : rclcpp::Node("simulator", options), br(*this)
+SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
 {
   Robot::sim_node = this;
   dt = 1./declare_parameter("rate", 20);
@@ -132,6 +131,15 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
 
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp/executors/multi_threaded_executor.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(map_simulator::SimulatorNode)
+int main(int argc, char** argv)
+{
+  rclcpp::init(argc, argv);
+
+  auto executor{rclcpp::executors::MultiThreadedExecutor()};
+  auto simulator{std::make_shared<map_simulator::SimulatorNode>()};
+  executor.add_node(simulator);
+  executor.spin();
+
+}

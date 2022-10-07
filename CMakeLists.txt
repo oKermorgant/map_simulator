@@ -12,7 +12,6 @@ find_package(nav_msgs REQUIRED)
 find_package(urdf REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(rclcpp_components REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -44,16 +43,16 @@ endif()
 
 pkg_check_modules(YamlCpp yaml-cpp)
 
-add_library(simulator_node SHARED src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
-target_include_directories(simulator_node PRIVATE include
+add_executable(simulator src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
+target_include_directories(simulator PRIVATE include
                            ${OpenCV_INCLUDE_DIRS}
                            ${YamlCpp_INCLUDE_DIRS})
-target_link_libraries(simulator_node ${OpenCV_LIBRARIES} yaml-cpp stdc++fs tinyxml2)
-ament_target_dependencies(simulator_node rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf rclcpp_components ${anchor_pkg})
+target_link_libraries(simulator ${OpenCV_LIBRARIES} yaml-cpp stdc++fs tinyxml2)
+ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ${anchor_pkg})
 if(${LEGACY_IDL})
-    rosidl_target_interfaces(simulator_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+    rosidl_target_interfaces(simulator ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
-    target_link_libraries(simulator_node "${cpp_typesupport_target}")
+    target_link_libraries(simulator "${cpp_typesupport_target}")
 endif()
 
 add_executable(spawn src/spawn.cpp)
@@ -81,12 +80,7 @@ if(NOT WIN32)
     )
 endif()
 
-# auto-executable from node
-rclcpp_components_register_node(simulator_node
-  PLUGIN "map_simulator::SimulatorNode"
-  EXECUTABLE simulator)
-
-install(TARGETS simulator_node spawn ${anchor_exec}
+install(TARGETS simulator spawn ${anchor_exec}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})
@@ -97,5 +91,5 @@ install(DIRECTORY launch example
 install(PROGRAMS src/kinematics.py 
     DESTINATION lib/${PROJECT_NAME})
   
-ament_export_libraries(simulator_node)
+ament_export_libraries(simulator)
 ament_package()
