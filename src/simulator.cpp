@@ -11,12 +11,12 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
   Robot::sim_node = this;
   dt = 1./declare_parameter("rate", 20);
 
-  auto share_folder = ament_index_cpp::get_package_share_directory("map_simulator");
+  const auto share_folder{ament_index_cpp::get_package_share_directory("map_simulator")};
 
-  const auto map = declare_parameter<std::string>("map", share_folder + "/example/house.yaml");
-  const auto max_height = declare_parameter<int>("max_height", 800);
-  const auto max_width = declare_parameter<int>("max_width", 1200);
-  const auto use_display = declare_parameter<bool>("display", true);
+  const auto map          {declare_parameter<std::string>("map", share_folder + "/example/house.yaml")};
+  const auto max_height   {declare_parameter<int>("max_height", 800)};
+  const auto max_width    {declare_parameter<int>("max_width", 1200)};
+  const auto use_display  {declare_parameter<bool>("display", true)};
 
   grid.initMap(map, max_height, max_width, use_display);
   if(use_display)
@@ -30,41 +30,44 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
     this);
   }
 
-  refresh_timer = create_wall_timer(milliseconds((long)(1000*dt)), [&]()
+  refresh_timer = create_wall_timer(milliseconds(static_cast<long>(1000*dt)), [&]()
   {refresh(now());});
 
   spawn_srv = create_service<Spawn>
-              ("/simulator/spawn", [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr )
-  {
-    addRobot(*request);
-  });
+      ("/simulator/spawn",
+       [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr )
+  {addRobot(*request);});
 
 #ifdef WITH_ANCHORS
   anchor_srv = create_service<srv::AddAnchor>
-              ("/simulator/add_anchor", [&](const srv::AddAnchor::Request::SharedPtr anchor,
-                                          srv::AddAnchor::Response::SharedPtr)
-  {
-    addAnchor(*anchor);
-  });
+      ("/simulator/add_anchor",
+       [&](const srv::AddAnchor::Request::SharedPtr anchor, srv::AddAnchor::Response::SharedPtr)
+  {addAnchor(*anchor);});
 #endif
 }
 
 void SimulatorNode::addRobot(const Spawn::Request &spec)
 {
-  cv::Scalar color{(double)spec.robot_color[2],(double)spec.robot_color[1],(double)spec.robot_color[0]};
+  cv::Scalar color(spec.robot_color[2],spec.robot_color[1],spec.robot_color[0]);
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
+  auto robot_namespace = spec.robot_namespace;
+  if(robot_namespace.back() != '/')
+    robot_namespace += '/';
 
-  robots.emplace_back(spec.robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
+  if(const auto twin = std::find(robots.begin(), robots.end(), robot_namespace);
+     twin != robots.end())
+  {
+    // remove duplicate robot before spawning the new one
+    robots.erase(twin);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+  robots.emplace_back(robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
                       spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(),
                       color, laser_color,
                       spec.linear_noise, spec.angular_noise);
-  auto new_robot = robots.back().initFromURDF(spec.force_scanner,
-                                              spec.zero_joints,
-                                              spec.static_tf_odom);
-
-  // remove any robot with same namespace (unless obstacle)
-  robots.remove_if([=](const Robot &robot)
-  {return robot.isTwin(new_robot);});
+  robots.back().initFromURDF(spec.force_scanner,
+                             spec.zero_joints,
+                             spec.static_tf_odom);
 }
 
 void SimulatorNode::removeRobotAt(int x, int y)

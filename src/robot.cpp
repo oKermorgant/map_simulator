@@ -46,7 +46,6 @@ std::vector<std::string> getVaryingJoints(const urdf::Model &model)
 }
 
 rclcpp::Node* Robot::Robot::sim_node;
-char Robot::n_robots = 0;
 std::default_random_engine Robot::random_engine;
 std::normal_distribution<double> Robot::unit_noise(0,1);
 builtin_interfaces::msg::Time Robot::stamp;
@@ -54,12 +53,10 @@ std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
 geometry_msgs::msg::TransformStamped Robot::pose_gt;
 
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
-  : id(n_robots++), robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
+  : robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
     pose{_pose}, linear_noise(_linear_noise), angular_noise(_angular_noise),
     laser_color(_laser_color), color(_color), radius(_radius)
 {
-  if(robot_namespace.back() != '/')
-    this->robot_namespace += '/';
 }
 
 void Robot::publish(tf2_ros::TransformBroadcaster &br)
@@ -99,7 +96,7 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
   }
 }
 
-std::pair<std::string,char> Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
+void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
 {
   // wait for this description
   rclcpp::QoS latching_qos(1);
@@ -109,7 +106,6 @@ std::pair<std::string,char> Robot::initFromURDF(bool force_scanner, bool zero_jo
         [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
   {loadModel(msg->data, force_scanner,zero_joints,static_tf);});
 
-  return {robot_namespace,id};
 }
 
 std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml, const std::string &link_prefix)
@@ -319,7 +315,7 @@ bool Robot::collidesWith(int u, int v) const
   return cv::pointPolygonTest(poly, cv::Point{u,v}, false) != -1;
 }
 
-void Robot::display(cv::Mat &img) const
+void Robot::write(cv::Mat &img) const
 {
   if(shape == Shape::Cirle)
   {

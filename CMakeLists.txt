@@ -38,7 +38,7 @@ else()
     set(LEGACY_IDL FALSE)
 endif()
 if(NOT ${LEGACY_IDL})
-rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+    rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 endif()
 
 pkg_check_modules(YamlCpp yaml-cpp)

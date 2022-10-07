@@ -10,7 +10,7 @@ namespace map_simulator
 
 class OccupancyGrid
 {
-  cv::Mat base_map, occ_map, scan_img;
+  cv::Mat map_img, occ_map, out_img;
   float res;
   float x0, y0;
   bool use_display = true;

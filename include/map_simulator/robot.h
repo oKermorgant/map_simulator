@@ -43,11 +43,9 @@ class Robot
 {
   enum class Shape{Cirle, Square};
 
-  static char n_robots;
   static std::default_random_engine random_engine;
   static std::normal_distribution<double> unit_noise;
   static builtin_interfaces::msg::Time stamp;
-  char id;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr description_sub;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
@@ -112,20 +110,15 @@ public:
         cv::Scalar _color, cv::Scalar _laser_color,
         double _linear_noise, double _angular_noise);
 
-  std::pair<std::string, char> initFromURDF(bool force_scanner, bool zero_joints, bool static_tf);
+  void initFromURDF(bool force_scanner, bool zero_joints, bool static_tf);
 
-  bool operator==(const Robot &other) const
+  bool operator==(const std::string &robot_namespace) const
   {
-    return id == other.id;
+    return this->robot_namespace == robot_namespace;
   }
   bool operator!=(const Robot &other) const
   {
-    return id != other.id;
-  }
-
-  bool isTwin(const std::pair<std::string, char> &other) const
-  {
-    return robot_namespace == other.first && id != other.second;
+    return robot_namespace != other.robot_namespace;
   }
 
   // grid access
@@ -137,7 +130,7 @@ public:
   float radius;
   double x() const {return pose.x;}
   double y() const {return pose.y;}
-  void display(cv::Mat &img) const;
+  void write(cv::Mat &img) const;
   std::vector<cv::Point> contour() const
   {
     std::vector<cv::Point> poly;
