@@ -110,6 +110,14 @@ public:
         cv::Scalar _color, cv::Scalar _laser_color,
         double _linear_noise, double _angular_noise);
 
+  inline void resetTo(const Pose2D _pose)
+  {
+    pose = _pose;
+    // also reset odom
+    odom.pose.pose = geometry_msgs::msg::Pose();
+    odom.twist.twist = geometry_msgs::msg::Twist();
+  }
+
   void initFromURDF(bool force_scanner, bool zero_joints, bool static_tf);
 
   bool operator==(const std::string &robot_namespace) const

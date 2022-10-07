@@ -34,7 +34,7 @@ This node takes the following arguments, which reflect the request part of a `Sp
 
 If a Gazebo laser plugin is found, the laser scans will be published with the same specifications.
 
-If a robot is spawned twice in the same workspace, the previous one will be removed.
+If a robot is spawned twice, only the pose will be reset. If any other parameter should be changed, remove it and re-spawn it with the new configuration.
 
 ## Unspawning robots
 

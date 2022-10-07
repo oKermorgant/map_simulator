@@ -47,9 +47,6 @@ SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
 
 void SimulatorNode::addRobot(const Spawn::Request &spec)
 {
-  RCLCPP_INFO(get_logger(), "Adding new robot %s", spec.robot_namespace.c_str());
-  cv::Scalar color(spec.robot_color[2],spec.robot_color[1],spec.robot_color[0]);
-  cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
   auto robot_namespace = spec.robot_namespace;
   if(robot_namespace.back() != '/')
     robot_namespace += '/';
@@ -57,11 +54,16 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   if(const auto twin = std::find(robots.begin(), robots.end(), robot_namespace);
      twin != robots.end())
   {
-    // remove duplicate robot before spawning the new one
-    robots.erase(twin);
-    RCLCPP_WARN(get_logger(), "overwriting prev robot %s", spec.robot_namespace.c_str());
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    RCLCPP_INFO(get_logger(), "resetting pose for robot %s", spec.robot_namespace.c_str());
+    twin->resetTo({spec.x, spec.y, spec.theta});
+    return;
   }
+
+  RCLCPP_INFO(get_logger(), "adding new robot %s", spec.robot_namespace.c_str());
+  cv::Scalar color(spec.robot_color[2],spec.robot_color[1],spec.robot_color[0]);
+  cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
+
+  // spawn a new robot
   robots.emplace_back(robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
                       spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(),
                       color, laser_color,
@@ -131,15 +133,9 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
 
 }
 
-#include <rclcpp/executors/multi_threaded_executor.hpp>
-
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-
-  auto executor{rclcpp::executors::MultiThreadedExecutor()};
   auto simulator{std::make_shared<map_simulator::SimulatorNode>()};
-  executor.add_node(simulator);
-  executor.spin();
-
+  rclcpp::spin(simulator);
 }

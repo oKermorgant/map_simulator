@@ -102,11 +102,12 @@ void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
   rclcpp::QoS latching_qos(1);
   latching_qos.transient_local();
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  RCLCPP_INFO(sim_node->get_logger(), "waiting for %srobot_description...", robot_namespace.c_str());
   description_sub = sim_node->create_subscription<std_msgs::msg::String>(
         robot_namespace + "robot_description", latching_qos,
         [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
   {
-    RCLCPP_INFO(sim_node->get_logger(), "Got robot description for %s", robot_namespace.c_str());
+    RCLCPP_INFO(sim_node->get_logger(), "Got %srobot_description", robot_namespace.c_str());
     loadModel(msg->data, force_scanner,zero_joints,static_tf);
   });
 }
