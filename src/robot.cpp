@@ -61,7 +61,7 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_cir
 
 void Robot::publish(tf2_ros::TransformBroadcaster &br)
 {
-  odom.header.stamp = transform.header.stamp = stamp;
+  odom.header.stamp = transform.header.stamp = stamp; 
 
   // build odom angle & publish as msg + tf
   odom_pub->publish(odom);
@@ -101,11 +101,14 @@ void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
   // wait for this description
   rclcpp::QoS latching_qos(1);
   latching_qos.transient_local();
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
   description_sub = sim_node->create_subscription<std_msgs::msg::String>(
         robot_namespace + "robot_description", latching_qos,
         [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
-  {loadModel(msg->data, force_scanner,zero_joints,static_tf);});
-
+  {
+    RCLCPP_INFO(sim_node->get_logger(), "Got robot description for %s", robot_namespace.c_str());
+    loadModel(msg->data, force_scanner,zero_joints,static_tf);
+  });
 }
 
 std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml, const std::string &link_prefix)

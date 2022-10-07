@@ -48,6 +48,7 @@ SimulatorNode::SimulatorNode(rclcpp::NodeOptions options)
 
 void SimulatorNode::addRobot(const Spawn::Request &spec)
 {
+  RCLCPP_INFO(get_logger(), "Adding new robot %s", spec.robot_namespace.c_str());
   cv::Scalar color(spec.robot_color[2],spec.robot_color[1],spec.robot_color[0]);
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
   auto robot_namespace = spec.robot_namespace;
@@ -59,6 +60,7 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   {
     // remove duplicate robot before spawning the new one
     robots.erase(twin);
+    RCLCPP_WARN(get_logger(), "overwriting prev robot %s", spec.robot_namespace.c_str());
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   robots.emplace_back(robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
@@ -83,7 +85,7 @@ void SimulatorNode::addAnchor(const Anchor &anchor)
                            [anchor](const auto &other){return anchor.frame == other.frame;});
   if(twin != anchors.end())
   {
-    RCLCPP_WARN(get_logger(), "Cannot add %s: already exists", + anchor.frame.c_str());
+    RCLCPP_WARN(get_logger(), "Cannot add %s: already exists", anchor.frame.c_str());
     return;
   }
 
