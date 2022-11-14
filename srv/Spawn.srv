@@ -11,7 +11,7 @@ uint8[3] laser_color [255,0,0]
 bool force_scanner true # will assume a laser scanner attached to base_link if none is found
 float64 linear_noise 0
 float64 angular_noise 0
-bool static_tf_odom false   # static tf of the map -> odom exact transform 
+bool static_tf_odom false   # static tf of the map -> odom exact transform
 bool zero_joints false # publishes 0-value for all non-fixed joints (wheels...)
 ---
 

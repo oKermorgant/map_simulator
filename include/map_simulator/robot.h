@@ -22,8 +22,8 @@
 
 namespace map_simulator
 {
-    
-#ifdef WITH_ANCHORS   
+
+#ifdef WITH_ANCHORS
 using Anchor = srv::AddAnchor::Request;
 #endif
 
@@ -173,7 +173,7 @@ public:
   // anchors stuff
 #ifdef WITH_ANCHORS
   void publishRanges(const std::vector<Anchor> &anchors);
-#endif  
+#endif
 
   bool connected() const
   {

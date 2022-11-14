@@ -61,7 +61,7 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_cir
 
 void Robot::publish(tf2_ros::TransformBroadcaster &br)
 {
-  odom.header.stamp = transform.header.stamp = stamp; 
+  odom.header.stamp = transform.header.stamp = stamp;
 
   // build odom angle & publish as msg + tf
   odom_pub->publish(odom);
@@ -164,7 +164,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   const auto [base_link, tf_prefix, base_link_standard] = decomposeBaseLink(*model); {}
   if(!base_link_standard)
   {
-    RCLCPP_WARN(sim_node->get_logger(), 
+    RCLCPP_WARN(sim_node->get_logger(),
                 "Description in namespace %s has root link named '%s' -> cannot detect TF prefix, should start with 'base_'",
                 robot_namespace.c_str(),
                 (tf_prefix+base_link).c_str());
@@ -278,10 +278,10 @@ void Robot::loadModel(const std::string &urdf_xml,
 
 void Robot::move(double dt)
 {
-  // update real pose with perfect velocity command  
+  // update real pose with perfect velocity command
   auto &vx(odom.twist.twist.linear.x);
   auto &vy(odom.twist.twist.linear.y);
-  auto &wz(odom.twist.twist.angular.z); 
+  auto &wz(odom.twist.twist.angular.z);
 
   // write actual covariance, proportional to velocity
   odom.twist.covariance[0] = std::max(0.0001, std::abs(vx)*linear_noise*linear_noise);
@@ -337,7 +337,7 @@ anchor_msgs::msg::RangeWithCovariance Robot::rangeFrom(const Anchor &anchor)
   range.header.frame_id = anchor.frame;
   range.moving_frame = transform.child_frame_id;  // assume receiver is placed on base link
   range.range_max = anchor.range_max;
-  range.range_min = anchor.range_min;  
+  range.range_min = anchor.range_min;
   const auto dx{anchor.x-pose.x};
   const auto dy{anchor.y-pose.y};
   const auto real_range{sqrt(dx*dx + dy*dy)};

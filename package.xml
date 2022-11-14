@@ -4,10 +4,10 @@
   <version>2.0.0</version>
   <description>Multi-robot 2D simulation with a map-based environment</description>
   <maintainer email="olivier.kermorgant@ec-nantes.fr">Olivier Kermorgant</maintainer>
-  <license>MIT</license>  
+  <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>rosidl_default_generators</build_depend>
-  
+
   <depend>libopencv-dev</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
@@ -16,7 +16,7 @@
   <depend>tf2_ros</depend>
   <depend>anchor_msgs</depend>
   <depend>yaml-cpp</depend>
-  
+
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 

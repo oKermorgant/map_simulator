@@ -15,7 +15,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(PkgConfig)
 
 find_package(anchor_msgs)
 
@@ -84,12 +83,12 @@ install(TARGETS simulator spawn ${anchor_exec}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})
-  
+
 install(DIRECTORY launch example
-  DESTINATION share/${PROJECT_NAME}) 
-  
-install(PROGRAMS src/kinematics.py 
+  DESTINATION share/${PROJECT_NAME})
+
+install(PROGRAMS src/kinematics.py
     DESTINATION lib/${PROJECT_NAME})
-  
+
 ament_export_libraries(simulator)
 ament_package()

@@ -129,8 +129,6 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
     last_tf = now.nanoseconds();
   }
 }
-
-
 }
 
 int main(int argc, char** argv)

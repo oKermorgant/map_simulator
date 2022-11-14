@@ -25,7 +25,7 @@ public:
 protected:
   OccupancyGrid grid;
   std::list<Robot> robots;
-  rclcpp::TimerBase::SharedPtr refresh_timer;
+  rclcpp::TimerBase::SharedPtr refresh_timer, description_timer;
 
   double dt;
 
@@ -35,6 +35,8 @@ protected:
   rclcpp::Service<Spawn>::SharedPtr spawn_srv;
   void addRobot(const Spawn::Request &spec);
   void removeRobotAt(int x, int y);
+
+  void scanForDescriptions();
 
 #ifdef WITH_ANCHORS
   rclcpp::Service<srv::AddAnchor>::SharedPtr anchor_srv;

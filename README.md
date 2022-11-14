@@ -8,7 +8,7 @@ The included launch files use the `simple_launch` package.
 
 ## Running the simulation
 
-Just launch `simulation2d_launch.py` by passing the `map` argument that should point to the yaml file of the map. 
+Just launch `simulation2d_launch.py` by passing the `map` argument that should point to the yaml file of the map.
 
 Setting `map_server:=true` also runs the corresponding map server.
 
@@ -24,13 +24,13 @@ This node takes the following arguments, which reflect the request part of a `Sp
 
 - `x`, `y`, `theta`: where to spawn the robot
 - `radius`: the size of the robot (used for display + laser detection from other robots)
-- `shape`: `circle` or `square` 
+- `shape`: `circle` or `square`
 - `robot_color`: a length-3 RGB (0-255) int array
 - `laser_color`: a length-3 RGB (0-255) int array
 - `force_scanner`: a Boolean (default True) to publish laser scans even if the URDF does not contain any laser scanner
 - `static_tf_odom`: a Boolean (default False) to run a static TF broadcaster of the map -> odom frame of this robot
 - `zero_joints`:a Boolean (default False) to publish 0-values for all non-fixed joints of the robot
-- `linear_noise` and `angular_noise`: a float (default 0) for the standard deviation of the noise added to the robot velocity twist, 
+- `linear_noise` and `angular_noise`: a float (default 0) for the standard deviation of the noise added to the robot velocity twist,
 
 If a Gazebo laser plugin is found, the laser scans will be published with the same specifications.
 
@@ -53,20 +53,20 @@ The `spawn` node will spawn anything at the requested pose / size. If no `robot_
 ## Spawning range beacons
 
 If the package `anchor_msgs` is available at compile-time then the simulator can render range measurements between the robots and some beacons put at any (x,y) position. The `spawn_anchor_launch.py` offers a simple way to spawn such anchors.
-- the real anchor positions are given as the `<name>_gt` frame under `/tf`, 
+- the real anchor positions are given as the `<name>_gt` frame under `/tf`,
 - any localization algorithm should use the `<name>` frame, that is at the same place as `<name>_gt` if `publish_gt` is true in `spawn_anchor_launch.py`. Otherwise, some range-only SLAM node should be used to estimate the positions of the anchors from some custom initialization.
 
 As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace.
 
 ## Using steering wheels robots
 
-A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to get the robot type (unicycle / bicycle / two-steering). 
+A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to get the robot type (unicycle / bicycle / two-steering).
 
- - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels 
+ - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels
  - for other robots, it subscribes to `cmd` of type `std_msgs/Float32MultiArray`. This topic is assumed to be the one used for low-level control:
     - `(front wheel velocity, steering velocity)` for bicycle robots
     - `(front wheel velocity, front steering velocity, rear steering velocity)` for two-steering robots
-    
+
 The node will publish the corresponding `joint_states` and, if the parameter `pub_cmd` is `True` it will also publish the corresponding Twist.
 
 It will also set the `(b, r)` (unicycle) or `(L, ~)` (other) parameters that are the wheel distance and radius parsed from `robot_description`.
