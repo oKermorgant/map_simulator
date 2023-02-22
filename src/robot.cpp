@@ -52,10 +52,10 @@ builtin_interfaces::msg::Time Robot::stamp;
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
 geometry_msgs::msg::TransformStamped Robot::pose_gt;
 
-Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, bool is_circle, double _radius, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
-  : robot_namespace(robot_namespace), shape(is_circle ? Shape::Cirle : Shape::Square),
+Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, decltype(Robot::CIRCLE) shape, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
+  : robot_namespace(robot_namespace), shape{shape},
     pose{_pose}, linear_noise(_linear_noise), angular_noise(_angular_noise),
-    laser_color(_laser_color), color(_color), radius(_radius)
+    laser_color(_laser_color), color(_color), size(size)
 {
 }
 
@@ -85,7 +85,7 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
   }
 
   if(publish_gt)
-  {
+  {    
     pose_gt.child_frame_id = odom.child_frame_id + "_gt";
     pose_gt.header.stamp = stamp;
     pose_gt.transform.translation.x = pose.x;
@@ -310,10 +310,10 @@ void Robot::move(double dt)
 
 bool Robot::collidesWith(int u, int v) const
 {
-  if(shape == Shape::Cirle)
+  if(shape == CIRCLE)
   {
     return (u-pos_pix.x)*(u-pos_pix.x) + (v-pos_pix.y)*(v-pos_pix.y)
-        < radius*radius;
+        < radius()*radius();
   }
   const auto poly(contour());
   return cv::pointPolygonTest(poly, cv::Point{u,v}, false) != -1;
@@ -321,9 +321,9 @@ bool Robot::collidesWith(int u, int v) const
 
 void Robot::write(cv::Mat &img) const
 {
-  if(shape == Shape::Cirle)
+  if(shape == CIRCLE)
   {
-    cv::circle(img, pos_pix, radius, color, -1);
+    cv::circle(img, pos_pix, radius(), color, -1);
     return;
   }
   cv::fillConvexPoly(img, contour(), color);

@@ -64,8 +64,13 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   cv::Scalar laser_color{(double)spec.laser_color[2],(double)spec.laser_color[1],(double)spec.laser_color[0]};
 
   // spawn a new robot
+  auto size{spec.size};
+  if(spec.shape == spec.SHAPE_CIRCLE)
+    size[0] = spec.radius;
+  for(auto &s: size)
+    s /= grid.resolution();
   robots.emplace_back(robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
-                      spec.shape == spec.SHAPE_CIRCLE, spec.radius/grid.resolution(),
+                      spec.shape, size,
                       color, laser_color,
                       spec.linear_noise, spec.angular_noise);
   robots.back().initFromURDF(spec.force_scanner,

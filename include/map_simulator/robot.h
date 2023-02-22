@@ -14,6 +14,7 @@
 #include <opencv2/core.hpp>
 #include <tinyxml2.h>
 #include <random>
+#include <map_simulator/srv/spawn.hpp>
 
 #ifdef WITH_ANCHORS
 #include <anchor_msgs/msg/range_with_covariance.hpp>
@@ -41,8 +42,6 @@ struct Pose2D
 
 class Robot
 {
-  enum class Shape{Cirle, Square};
-
   static std::default_random_engine random_engine;
   static std::normal_distribution<double> unit_noise;
   static builtin_interfaces::msg::Time stamp;
@@ -51,12 +50,16 @@ class Robot
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scan_pub;
 
+  inline static constexpr auto CIRCLE = srv::Spawn::Request::SHAPE_CIRCLE;
+  inline static constexpr auto SQUARE = srv::Spawn::Request::SHAPE_SQUARE;
+  inline static constexpr auto RECTANGLE = srv::Spawn::Request::SHAPE_RECTANGLE;
+
   nav_msgs::msg::Odometry odom;
   geometry_msgs::msg::TransformStamped transform;
 
   // robot specs
   std::string robot_namespace;
-  Shape shape;
+  decltype (CIRCLE) shape;
   Pose2D pose;
   double linear_noise = 0, angular_noise = 0;
   // 2D laser offset / base_link
@@ -97,7 +100,7 @@ class Robot
       return;
     }
     readFrom(root->FirstChildElement(tag_sequence.front().c_str()),
-    {tag_sequence.begin()+1, tag_sequence.end()},
+             {tag_sequence.begin()+1, tag_sequence.end()},
              val);
   }
 
@@ -106,7 +109,7 @@ class Robot
 public:
 
   Robot(const std::string &robot_namespace, const Pose2D _pose,
-        bool is_circle, double _radius,
+        decltype (CIRCLE) shape, const std::array<double, 3> &size,
         cv::Scalar _color, cv::Scalar _laser_color,
         double _linear_noise, double _angular_noise);
 
@@ -135,19 +138,42 @@ public:
   cv::Scalar laser_color;
   cv::Scalar color;
 
-  float radius;
+  std::array<double, 3> size;
   double x() const {return pose.x;}
   double y() const {return pose.y;}
   void write(cv::Mat &img) const;
+
+  inline double radius() const
+  {
+    return size[0];
+  }
+
   std::vector<cv::Point> contour() const
   {
     std::vector<cv::Point> poly;
-    const double diagonal(radius / 1.414);
-    for(auto corner: {0, 1, 2, 3})
+    if(shape == SQUARE)
     {
-      float corner_angle = -pose.theta + M_PI/4 + M_PI/2*corner;
-      poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
-                        pos_pix.y + diagonal*sin(corner_angle));
+      const double diagonal(radius() / 1.414);
+      for(auto corner: {0, 1, 2, 3})
+      {
+        float corner_angle = -pose.theta + M_PI/4 + M_PI/2*corner;
+        poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
+                          pos_pix.y + diagonal*sin(corner_angle));
+      }
+    }
+    else
+    {
+      const auto W{size[0]/2};
+      const auto L{size[1]/2};      
+      const auto O{size[2]};
+      poly.emplace_back(-L+O, -W);
+      poly.emplace_back(L+O, -W);
+      poly.emplace_back(L+O, W);
+      poly.emplace_back(-L+O, W);
+      const auto c{cos(pose.theta)};
+      const auto s{sin(pose.theta)};
+      for(auto &p: poly)
+        p = {int(pos_pix.x + c*p.x + s*p.y), int(pos_pix.y - s*p.x + c*p.y)};
     }
     return poly;
   }

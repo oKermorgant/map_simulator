@@ -20,21 +20,30 @@ int main(int argc, char** argv)
   request->radius = node->declare_parameter("radius", 0.3);
 
   const auto shape = node->declare_parameter("shape", "circle");
-  request->shape = shape == "square" ? request->SHAPE_SQUARE : request->SHAPE_CIRCLE;
+  if(shape == "square")
+    request->shape = request->SHAPE_SQUARE;
+  else if(shape == "rectangle")
+    request->shape = request->SHAPE_RECTANGLE;
+  else
+    request->shape = request->SHAPE_CIRCLE;
 
   request->linear_noise = node->declare_parameter("linear_noise", 0.);
   request->angular_noise = node->declare_parameter("angular_noise", 0.);
 
   auto robot_color = node->declare_parameter("robot_color", std::vector<int64_t>{0,0,0});
-  auto laser_color = node->declare_parameter("laser_color", std::vector<int64_t>{255,0,0});
-
   if(robot_color.size() != 3)
     robot_color = {0,0,0};
   std::copy(robot_color.begin(), robot_color.end(), request->robot_color.begin());
 
+  auto laser_color = node->declare_parameter("laser_color", std::vector<int64_t>{255,0,0});
   if(laser_color.size() != 3)
     laser_color = {255,0,0};
   std::copy(laser_color.begin(), laser_color.end(), request->laser_color.begin());
+
+  auto size = node->declare_parameter("size", std::vector<double>{0,0,0});
+  if(size.size() != 3)
+    size = {0,0,0};
+  std::copy(size.begin(), size.end(), request->size.begin());
 
   request->force_scanner= node->declare_parameter("force_scanner", true);
   request->static_tf_odom = node->declare_parameter("static_tf_odom", false);

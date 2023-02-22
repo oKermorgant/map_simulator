@@ -9,33 +9,45 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 import numpy as np
+from sys import exit
 
 dt = 0.05
 
+
 class Wheel:
     def __init__(self, joint):
+        self.name = joint.name
         self.sign = joint.wheel_sign
-    def move(self, val, w):
-        return val + self.sign*w*dt
+        self.val = 0.
+
+    def move(self, w):
+        self.val += self.sign*w*dt
+
 
 class SteeringJoint:
-    def __init__(self, joint):
-        self.low = joint.low
-        self.up = joint.up
-    def move(self, val, w):
-        val += w*dt
+    def __init__(self, joint=None, low=None, up=None):
+        if joint is not None:
+            self.name = joint.name
+            self.low = joint.low
+            self.up = joint.up
+        else:
+            self.name = 'steering'
+            self.low = low
+            self.up = up
+        self.val = 0.
+
+    def move(self, w):
+        self.val += w*dt
         if self.low is not None:
-            if val > self.up:
-                return self.up
-            elif val < self.low:
-                return self.low
-        return val
+            self.val = np.clip(self.val, self.low, self.up)
+
 
 class Robot(Node):
     def __init__(self, joints, cmd_dim):
         super().__init__('kinematics')
+        self.joints = joints
         self.state = JointState()
-        self.state.name = joints
+        self.state.name = [joint.name for joint in joints]
         self.state.position = [0. for _ in range(len(joints))]
         self.joint_pub = self.create_publisher(JointState, 'joint_states', 5)
         self.cmd = [0. for _ in range(cmd_dim)]
@@ -61,6 +73,7 @@ class Robot(Node):
 
     def publish(self):
         self.state.header.stamp = self.get_clock().now().to_msg()
+        self.state.position = [joint.val for joint in self.joints]
         self.joint_pub.publish(self.state)
 
         if self.cmd_vel_pub is not None:
@@ -70,14 +83,15 @@ class Robot(Node):
         for name in names:
             self.declare_parameter(name, getattr(self, name))
 
+
 class Unicycle(Robot):
-    def __init__(self, names, left, right, b, r):
-        super().__init__(names, 0)
+    def __init__(self, left, right, b, r, left2=None, right2=None):
+        super().__init__([j for j in (left,right,left2,right2) if j is not None], 0)
         self.b = b
         self.r = r
         self.left = left
         self.right = right
-        self.mimic = len(names) == 4
+        self.mimic = left2 is not None
 
         self.set_params(['b','r'])
 
@@ -92,26 +106,25 @@ class Unicycle(Robot):
         v = self.cmd_vel.linear.x
         w = self.cmd_vel.angular.z
 
-        for idx, joint, vel in ((0, self.left, (v-self.b*w)/self.r),
-                                (1, self.right, (v+self.b*w)/self.r)):
-            self.state.position[idx] = joint.move(self.state.position[idx], vel)
-            if self.mimic:
-                self.state.position[idx+2] = self.state.position[idx]
+        self.left.move((v-self.b*w)/self.r)
+        self.right.move((v+self.b*w)/self.r)
+
+        if self.mimic:
+            self.joints[2].val = self.left.val
+            self.joints[3].val = self.right.val
+
 
 class Bicycle(Robot):
-    def __init__(self, names, front, rear, beta, L, r):
-        super().__init__(names, 2)
+    def __init__(self, front, rear, beta, L, r):
+        super().__init__([front, rear, beta], 2)
         self.L = L
         self.r = r
-        self.front = front
-        self.rear = rear
-        self.beta = beta
         self.set_params(['L','r'])
 
     def update(self):
         # got (v, beta dot) in self.cmd
         v, bdot = self.cmd
-        beta = self.state.position[2]
+        beta = self.joints[2].val
 
         # Twist
         self.cmd_vel.linear.x = v * np.cos(beta)
@@ -121,22 +134,63 @@ class Bicycle(Robot):
         wf = v/self.r
         wr = self.cmd_vel.linear.x / self.r
 
-        for idx, joint, vel in ((0, self.front, wf),
-                                (1, self.rear, wr),
-                                (2, self.beta, bdot)):
-            self.state.position[idx] = joint.move(self.state.position[idx], vel)
+        for idx, vel in enumerate((wf, wr, bdot)):
+            self.joints[idx].move(vel)
+
+
+class Ackermann(Robot):
+    def __init__(self, fls, frs, fl, fr, rl, rr, L, r, B):
+        super().__init__([fls,frs,fl,fr,rl,rr,SteeringJoint(low=fls.low, up=fls.up)], 2)
+        self.L = L
+        self.r = r
+        self.B = B
+
+        self.set_params(['L','r','B'])
+
+    def update(self):
+        v, bdot = self.cmd
+        beta = self.joints[-1].val
+
+        # Twist
+        self.cmd_vel.linear.x = v * np.cos(beta)
+        self.cmd_vel.angular.z = v * np.sin(beta) / self.L
+
+        # update beta
+        self.joints[-1].move(bdot)
+
+        # update steering angles
+        tb = np.tan(self.joints[-1].val)
+        self.joints[0].val = np.arctan(self.L*tb/(self.L+0.5*self.B*tb))
+        self.joints[1].val = np.arctan(self.L*tb/(self.L-0.5*self.B*tb))
+
+        # update wheels, find curvature radius
+        # velocity of imaginary centered rear wheel
+        w = self.cmd_vel.linear.x/self.r
+
+        # wheel velocities
+        if abs(tb) < 1e-4:
+            for i in range(2, 6):
+                self.joints[i].move(w)
+            return
+
+        rho = self.L/tb
+        ratio = w/rho
+
+        rrl = rho-self.B/2
+        rrr = rho+self.B/2
+        rfl = np.sqrt(rrl**2+self.L**2)*np.sign(rho)
+        rfr = np.sqrt(rrr**2+self.L**2)*np.sign(rho)
+
+        for idx, dist in enumerate((rfl, rfr, rrl, rrr)):
+            self.joints[idx+2].move(dist*ratio)
 
 
 class TwoSteering(Robot):
-    def __init__(self, names, front, rear, beta1, beta2, L, r):
-        super().__init__(names, 3)
+    def __init__(self, front, rear, beta1, beta2, L, r):
+        super().__init__([front, rear, beta1, beta2], 3)
         self.L = L
         self.r = r
         self.set_params(['L','r'])
-        self.front = front
-        self.rear = rear
-        self.beta1 = beta1
-        self.beta2 = beta2
 
     def update(self):
         # got (v, beta dot) in self.cmd
@@ -155,11 +209,9 @@ class TwoSteering(Robot):
         wf = v1/self.r
         wr = v2/self.r
 
-        for idx, joint, vel in ((0, self.front, wf),
-                                (1, self.rear, wr),
-                                (2, self.beta1, bdot1),
-                                (3, self.beta2, bdot2)):
-            self.state.position[idx] = joint.move(self.state.position[idx], vel)
+        for idx, vel in enumerate((wf, wr, bdot1, bdot2)):
+            self.joints[idx].move(vel)
+
 
 def create_robot():
     # get model xml
@@ -241,6 +293,9 @@ def create_robot():
     # parse model, guess role of each joint
     joints = [Joint(joint) for joint in model.joints if joint.type in ('continuous','revolute')]
 
+    if len(joints) == 0:
+        exit(0)
+
     # identify wheels vs steering joints
     wheels = [joint for joint in joints if joint.wheel_sign]
     steering = [joint for joint in joints if not joint.wheel_sign]
@@ -252,44 +307,48 @@ def create_robot():
         raise(RuntimeError('\n'.join(msg)))
 
     # we assume the wheels have the same radius
-    r = 0.5* (wheels[0].z + wheels[1].z)
+    r = 0.5*(wheels[0].z + wheels[1].z)
 
     if len(steering) == 0:
         # unicycle
         if len(wheels) == 2:
             left, right = Joint.identify(wheels, 'y')
-            names = [left.name, right.name]
+            left2 = right2 = None
         else:
             left = [w for w in wheels if w.y > 0]
             right = [w for w in wheels if w.y < 0]
-            names = [left[0].name,right[0].name,left[1].name,right[1].name]
-            left = left[0]
-            right = right[0]
-        return Unicycle(names,
-                        Wheel(left),
+            left, left2 = left
+            right, right2 = right
+        return Unicycle(Wheel(left),
                         Wheel(right),
-                        left.y - right.y,
+                        left.y - right.y, r,
+                        left2, right2)
+
+    if len(wheels) == 2:
+        # basic model
+        front, rear = Joint.identify(wheels, 'x')
+
+        if len(steering) == 1:
+            return Bicycle(Wheel(front),
+                        Wheel(rear),
+                        SteeringJoint(steering[0]),
+                        front.x-rear.x,
                         r)
 
-    front, rear = Joint.identify(wheels, 'x')
+        # two-steering
+        beta1, beta2 = Joint.identify(steering, 'x')
+        return TwoSteering(Wheel(front),
+                        Wheel(rear),
+                        SteeringJoint(beta1),
+                        SteeringJoint(beta2),
+                        front.x-rear.x,
+                        r)
 
-    if len(steering) == 1:
-        return Bicycle([front.name, rear.name, steering[0].name],
-                       Wheel(front),
-                       Wheel(rear),
-                       SteeringJoint(steering[0]),
-                       front.x-rear.x,
-                       r)
-
-    # two-steering
-    beta1, beta2 = Joint.identify(steering, 'x')
-    return TwoSteering([front.name, rear.name, beta1.name, beta2.name],
-                       Wheel(front),
-                       Wheel(rear),
-                       SteeringJoint(beta1),
-                       SteeringJoint(beta2),
-                       front.x-rear.x,
-                       r)
+    # Probably Ackermann (2 steering / 4 wheels)
+    fls, frs = Joint.identify(steering, 'y')
+    fl,fr,rl,rr = sorted(wheels, key = lambda w: -w.x - 0.001*w.y)
+    return Ackermann(SteeringJoint(fls),SteeringJoint(frs),
+                     Wheel(fl),Wheel(fr),Wheel(rl),Wheel(rr), fl.x-rl.x, r, rl.y - rr.y)
 
 
 rclpy.init()
