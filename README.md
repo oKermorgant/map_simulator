@@ -61,16 +61,19 @@ As soon as some anchors are spawned, a `range` topic will be published in each r
 
 ## Using steering wheels robots
 
-A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to get the robot type (unicycle / bicycle / two-steering).
+A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle / Ackermann and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to identify the robot type (unicycle / bicycle / Ackermann / two-steering) from the topology of the joints.
 
  - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels
  - for other robots, it subscribes to `cmd` of type `std_msgs/Float32MultiArray`. This topic is assumed to be the one used for low-level control:
     - `(front wheel velocity, steering velocity)` for bicycle robots
     - `(front wheel velocity, front steering velocity, rear steering velocity)` for two-steering robots
+ - Ackermann-like robots will be added a dummy joint called `steering` that represents the actual steering angle
 
 The node will publish the corresponding `joint_states` and, if the parameter `pub_cmd` is `True` it will also publish the corresponding Twist.
 
 It will also set the `(b, r)` (unicycle) or `(L, ~)` (other) parameters that are the wheel distance and radius parsed from `robot_description`.
+
+Set the parameter `rotate_wheels` to `False` in order not to display the rotation of the wheels (may lag a bit in RViz).
 
 This allows testing high-lever controllers for steering wheels robots.
 

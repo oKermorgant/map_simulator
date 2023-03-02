@@ -11,17 +11,20 @@ from geometry_msgs.msg import Twist
 import numpy as np
 from sys import exit
 
-dt = 0.05
+dt = 0.02
 
 
 class Wheel:
+    rotate = True
+
     def __init__(self, joint):
         self.name = joint.name
         self.sign = joint.wheel_sign
         self.val = 0.
 
     def move(self, w):
-        self.val += self.sign*w*dt
+        if self.rotate:
+            self.val += self.sign*w*dt
 
 
 class SteeringJoint:
@@ -51,6 +54,8 @@ class Robot(Node):
         self.state.position = [0. for _ in range(len(joints))]
         self.joint_pub = self.create_publisher(JointState, 'joint_states', 5)
         self.cmd = [0. for _ in range(cmd_dim)]
+
+        Wheel.rotate = self.declare_parameter('rotate_wheels', True).value
 
         self.cmd_vel = Twist()
 
@@ -214,6 +219,7 @@ class TwoSteering(Robot):
 
 
 def create_robot():
+
     # get model xml
     from rcl_interfaces.srv import GetParameters
     from urdf_parser_py.urdf import URDF
