@@ -52,9 +52,9 @@ builtin_interfaces::msg::Time Robot::stamp;
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
 geometry_msgs::msg::TransformStamped Robot::pose_gt;
 
-Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, decltype(Robot::CIRCLE) shape, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
-  : robot_namespace(robot_namespace), shape{shape},
-    pose{_pose}, linear_noise(_linear_noise), angular_noise(_angular_noise),
+Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
+  : robot_namespace(robot_namespace), pose{_pose},
+    linear_noise(_linear_noise), angular_noise(_angular_noise),
     laser_color(_laser_color), color(_color), size(size)
 {
 }
@@ -310,7 +310,7 @@ void Robot::move(double dt)
 
 bool Robot::collidesWith(int u, int v) const
 {
-  if(shape == CIRCLE)
+  if(isCircle())
   {
     return (u-pos_pix.x)*(u-pos_pix.x) + (v-pos_pix.y)*(v-pos_pix.y)
         < radius()*radius();
@@ -321,7 +321,7 @@ bool Robot::collidesWith(int u, int v) const
 
 void Robot::write(cv::Mat &img) const
 {
-  if(shape == CIRCLE)
+  if(isCircle())
   {
     cv::circle(img, pos_pix, radius(), color, -1);
     return;

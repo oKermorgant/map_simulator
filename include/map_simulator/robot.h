@@ -59,7 +59,6 @@ class Robot
 
   // robot specs
   std::string robot_namespace;
-  decltype (CIRCLE) shape;
   Pose2D pose;
   double linear_noise = 0, angular_noise = 0;
   // 2D laser offset / base_link
@@ -109,7 +108,7 @@ class Robot
 public:
 
   Robot(const std::string &robot_namespace, const Pose2D _pose,
-        decltype (CIRCLE) shape, const std::array<double, 3> &size,
+        const std::array<double, 3> &size,
         cv::Scalar _color, cv::Scalar _laser_color,
         double _linear_noise, double _angular_noise);
 
@@ -150,33 +149,21 @@ public:
 
   std::vector<cv::Point> contour() const
   {
-    std::vector<cv::Point> poly;
-    if(shape == SQUARE)
-    {
-      const double diagonal(radius() / 1.414);
-      for(auto corner: {0, 1, 2, 3})
-      {
-        float corner_angle = -pose.theta + M_PI/4 + M_PI/2*corner;
-        poly.emplace_back(pos_pix.x + diagonal*cos(corner_angle),
-                          pos_pix.y + diagonal*sin(corner_angle));
-      }
-    }
-    else
-    {
-      const auto W{size[0]/2};
-      const auto L{size[1]/2};      
-      const auto O{size[2]};
-      poly.emplace_back(-L+O, -W);
-      poly.emplace_back(L+O, -W);
-      poly.emplace_back(L+O, W);
-      poly.emplace_back(-L+O, W);
-      const auto c{cos(pose.theta)};
-      const auto s{sin(pose.theta)};
-      for(auto &p: poly)
-        p = {int(pos_pix.x + c*p.x + s*p.y), int(pos_pix.y - s*p.x + c*p.y)};
-    }
+    const int W(size[0]/2);
+    const int L(size[1]/2);
+    const int O(size[2]);
+    std::vector<cv::Point> poly{{-L+O, -W},
+                                {L+O, -W},
+                                {L+O, W},
+                                {-L+O, W}};
+    const auto c{cos(pose.theta)};
+    const auto s{sin(pose.theta)};
+    for(auto &p: poly)
+      p = {int(pos_pix.x + c*p.x + s*p.y), int(pos_pix.y - s*p.x + c*p.y)};
     return poly;
   }
+
+  inline bool isCircle() const {return size[1] == 0.;}
 
   bool collidesWith(int u, int v) const;
 
@@ -201,14 +188,14 @@ public:
   void publishRanges(const std::vector<Anchor> &anchors);
 #endif
 
-  bool connected() const
+  inline bool connected() const
   {
-    return odom_pub.get();
+    return odom_pub.get() != nullptr;
   }
 
-  bool hasLaser() const
+  inline bool hasLaser() const
   {
-    return scan_pub.get();
+    return scan_pub.get() != nullptr;
   }
 
   void publish(tf2_ros::TransformBroadcaster &br);

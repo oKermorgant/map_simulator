@@ -67,11 +67,12 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
   auto size{spec.size};
   if(spec.shape == spec.SHAPE_CIRCLE)
     size[0] = spec.radius;
+  else if(spec.shape == spec.SHAPE_SQUARE)
+    size[0] = size[1] = spec.radius;
   for(auto &s: size)
     s /= grid.resolution();
   robots.emplace_back(robot_namespace, Pose2D{spec.x, spec.y, spec.theta},
-                      spec.shape, size,
-                      color, laser_color,
+                      size, color, laser_color,
                       spec.linear_noise, spec.angular_noise);
   robots.back().initFromURDF(spec.force_scanner,
                              spec.zero_joints,
@@ -96,7 +97,7 @@ void SimulatorNode::addAnchor(const Anchor &anchor)
   }
 
   anchors.push_back(anchor);
-  anchors.back().covariance_factor_real = sqrt(anchors.back().covariance_factor_real);
+  anchors.back().covariance_factor_real = std::max(sqrt(anchors.back().covariance_factor_real), 1e-9);
   geometry_msgs::msg::TransformStamped anchor_tf;
   anchor_tf.header.stamp = now();
   anchor_tf.header.frame_id = "map";

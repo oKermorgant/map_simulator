@@ -21,5 +21,9 @@ def generate_launch_description():
         robot_color = sl.py_eval("[c//2 for c in ", sl.arg('color'), ']')
         sl.node('map_simulator', 'spawn', parameters = {'radius': 0.4, 'shape': 'square', 'robot_color': robot_color, 'laser_color': sl.arg('color'), 'static_tf_odom': True})
 
+        # or with simple_launch's service wrapper
+        #from map_simulator.srv import Spawn
+        #sl.service('/simulator/spawn', request = {'robot_namespace': '__ns', 'radius': 0.4, 'shape': Spawn.Request.SHAPE_SQUARE, 'robot_color': robot_color, 'laser_color': sl.arg('color'), 'static_tf_odom': True})
+
 
     return sl.launch_description()
