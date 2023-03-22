@@ -41,9 +41,7 @@ struct Pose2D
 };
 
 class Robot
-{
-  static std::default_random_engine random_engine;
-  static std::normal_distribution<double> unit_noise;
+{        
   static builtin_interfaces::msg::Time stamp;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr description_sub;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
@@ -65,16 +63,10 @@ class Robot
   Pose2D laser_pose;
 
   // optional publishers
-  bool publish_gt{false};
+  bool static_tf{true};
   bool zero_joints = false;
   sensor_msgs::msg::JointState::SharedPtr joint_states;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
-  static std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_br;
-  static inline void initStaticTfBr()
-  {
-    if(!static_tf_br.get())
-      static_tf_br = std::make_unique<tf2_ros::StaticTransformBroadcaster>(sim_node);
-  }
 
   // anchors stuff
 #ifdef WITH_ANCHORS
@@ -173,12 +165,11 @@ public:
 
   // shared among robots
   static rclcpp::Node* sim_node;
-  static geometry_msgs::msg::TransformStamped pose_gt;
   inline static void refreshStamp() {stamp = sim_node->get_clock()->now();}
   inline static void publishStaticTF(const geometry_msgs::msg::TransformStamped &tr)
   {
-    initStaticTfBr();
-    static_tf_br->sendTransform(tr);
+    static tf2_ros::StaticTransformBroadcaster static_tf_br(sim_node);
+    static_tf_br.sendTransform(tr);
   }
 
   void move(double dt);

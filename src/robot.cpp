@@ -6,6 +6,8 @@
 namespace map_simulator
 {
 
+
+
 void adaptNamespace(std::string &topic, std::string ns)
 {
   if(ns[0] == '/')
@@ -45,12 +47,16 @@ std::vector<std::string> getVaryingJoints(const urdf::Model &model)
   return names;
 }
 
+double withNoise(double val, double std)
+{
+  static std::default_random_engine random_engine;
+  static std::normal_distribution<double> unit_noise(0,1);
+  return val * (1+std*unit_noise(random_engine));
+}
+
+
 rclcpp::Node* Robot::Robot::sim_node;
-std::default_random_engine Robot::random_engine;
-std::normal_distribution<double> Robot::unit_noise(0,1);
 builtin_interfaces::msg::Time Robot::stamp;
-std::unique_ptr<tf2_ros::StaticTransformBroadcaster> Robot::static_tf_br;
-geometry_msgs::msg::TransformStamped Robot::pose_gt;
 
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
   : robot_namespace(robot_namespace), pose{_pose},
@@ -84,8 +90,10 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
     js_pub->publish(*joint_states);
   }
 
-  if(publish_gt)
-  {    
+  if(!static_tf)
+  {
+    geometry_msgs::msg::TransformStamped pose_gt;
+    pose_gt.header.frame_id = "map";
     pose_gt.child_frame_id = odom.child_frame_id + "_gt";
     pose_gt.header.stamp = stamp;
     pose_gt.transform.translation.x = pose.x;
@@ -171,7 +179,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   }
 
   // link prefix is either tf_prefix if any, or robot namespace
-  const auto link_prefix{tf_prefix.size() ? tf_prefix : robot_namespace.substr(1, robot_namespace.npos)};
+  const auto link_prefix = tf_prefix.size() ? tf_prefix : robot_namespace.substr(1, robot_namespace.npos);
 
   // try to find laser scanner as Gazebo plugin
   auto [scan_init, samples, scan_topic] = parseLaser(urdf_xml, link_prefix); {}
@@ -194,7 +202,7 @@ void Robot::loadModel(const std::string &urdf_xml,
       scan_topic = scan_topic.substr(1, scan_topic.npos);
     adaptNamespace(scan_topic, robot_namespace);
     scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>
-               (scan_topic,rclcpp::SensorDataQoS());
+        (scan_topic,rclcpp::SensorDataQoS());
   }
 
   odom_pub = sim_node->create_publisher<nav_msgs::msg::Odometry>(robot_namespace + "odom", 10);
@@ -266,11 +274,7 @@ void Robot::loadModel(const std::string &urdf_xml,
     odom2map.transform.rotation.w = cos(pose.theta/2);
     publishStaticTF(odom2map);
   }
-  else
-  {
-    pose_gt.header.frame_id = "map";
-  }
-  publish_gt = !static_tf;
+  this->static_tf = static_tf;
 
   // stop listening to robot_description, we got what we wanted
   description_sub.reset();
@@ -278,27 +282,34 @@ void Robot::loadModel(const std::string &urdf_xml,
 
 void Robot::move(double dt)
 {
-  // update real pose with perfect velocity command
+  // update real pose with noised velocity command
   auto &vx(odom.twist.twist.linear.x);
   auto &vy(odom.twist.twist.linear.y);
   auto &wz(odom.twist.twist.angular.z);
+
+  auto vxn{withNoise(vx, linear_noise)};
+  auto vyn{withNoise(vy, linear_noise)};
+  auto wzn{withNoise(wz, angular_noise)};
+
+  pose.updateFrom(vxn, vyn, wzn, dt);
 
   // write actual covariance, proportional to velocity
   odom.twist.covariance[0] = std::max(0.0001, std::abs(vx)*linear_noise*linear_noise);
   odom.twist.covariance[7] = std::max(0.0001, std::abs(vy)*linear_noise*linear_noise);
   odom.twist.covariance[35] = std::max(0.0001, std::abs(wz)*angular_noise*angular_noise);
 
-  pose.updateFrom(vx, vy, wz, dt);
-
-  // add noise: command velocity to measured (odometry) one
-  vx *= (1+linear_noise*unit_noise(random_engine));
-  vy *= (1+linear_noise*unit_noise(random_engine));
-  wz *= (1+angular_noise*unit_noise(random_engine));
+  // use another noise for odometry unless perfect odom expected
+  if(!static_tf)
+  {
+    vx = vxn = withNoise(vx, linear_noise);
+    vy = vyn = withNoise(vy, linear_noise);
+    wz = wzn = withNoise(wz, linear_noise);
+  }
 
   // update noised odometry
   Pose2D rel_pose{odom.pose.pose.position.x, odom.pose.pose.position.y,
-                 2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)};
-  rel_pose.updateFrom(vx, vy, wz, dt);
+        2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)};
+  rel_pose.updateFrom(vxn, vyn, wzn, dt);
 
   odom.pose.pose.position.x = rel_pose.x;
   odom.pose.pose.position.y = rel_pose.y;
@@ -341,7 +352,7 @@ anchor_msgs::msg::RangeWithCovariance Robot::rangeFrom(const Anchor &anchor)
   const auto dx{anchor.x-pose.x};
   const auto dy{anchor.y-pose.y};
   const auto real_range{sqrt(dx*dx + dy*dy)};
-  range.range = real_range * (1+anchor.covariance_factor_real*unit_noise(random_engine));
+  range.range = withNoise(real_range, anchor.covariance_factor_real);
   range.covariance = anchor.covariance_factor * real_range;
   return range;
 }
@@ -353,7 +364,7 @@ void Robot::publishRanges(const std::vector<Anchor> &anchors)
     return;
   if(!range_pub)
     range_pub = sim_node->create_publisher<anchor_msgs::msg::RangeWithCovariance>
-                (robot_namespace + "ranges", 10);
+        (robot_namespace + "ranges", 10);
 
   for(const auto &anchor: anchors)
     range_pub->publish(rangeFrom(anchor));
