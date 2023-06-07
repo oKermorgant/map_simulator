@@ -1,5 +1,6 @@
 from simple_launch import SimpleLauncher
 
+
 def generate_launch_description():
     sl = SimpleLauncher()
 
@@ -12,7 +13,7 @@ def generate_launch_description():
     sl.declare_arg('covariance_real',0.01,description='real covariance factor of the anchor range')
     sl.declare_arg('publish_gt',True,description='Publish real anchor position')
 
-    parameters = sl.arg_map(('frame','x','y','range_min','range_max','covariance','covariance_real'))
+    parameters = sl.arg_map('frame','x','y','range_min','range_max','covariance','covariance_real')
     # ensure floating points in case integers are passed
     for name in ('x','y','range_min','range_max','covariance','covariance_real'):
         parameters[name] = sl.py_eval('float(', sl.arg(name), ')')

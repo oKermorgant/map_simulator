@@ -81,13 +81,13 @@ class Robot
                        std::vector<std::string> tag_sequence,
                        T & val)
   {
-    if(tag_sequence.size() == 0)
+    if(!root)
+      return;
+
+    if(tag_sequence.empty())
     {
-      if(root)
-      {
-        std::stringstream ss(root->GetText());
-        ss >> val;
-      }
+      std::stringstream ss(root->GetText());
+      ss >> val;
       return;
     }
     readFrom(root->FirstChildElement(tag_sequence.front().c_str()),

@@ -16,10 +16,10 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 find_package(anchor_msgs)
 
-set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)
 
 set(anchor_pkg "")
@@ -41,7 +41,6 @@ if(NOT ${LEGACY_IDL})
     rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 endif()
 
-pkg_check_modules(YamlCpp yaml-cpp)
 
 add_executable(simulator src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
 target_include_directories(simulator PRIVATE include
