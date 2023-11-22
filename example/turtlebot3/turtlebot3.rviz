@@ -6,13 +6,12 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Map1/Status1
         - /Map1/Topic1
         - /Map1/Update Topic1
         - /RobotModel-Tbot1/Description Topic1
-        - /LaserScan-R2D21/Topic1
+        - /LaserScan-Tbot1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 754
+    Tree Height: 742
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -29,88 +28,6 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 1
-      Class: rviz_default_plugins/RobotModel
-      Collision Enabled: false
-      Description File: ""
-      Description Source: Topic
-      Description Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /r2d2/robot_description
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        r2d2/base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        r2d2/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/box:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/head:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/left_back_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/left_base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/left_front_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/left_leg:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/right_back_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/right_base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/right_front_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r2d2/right_leg:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Name: RobotModel-R2D2
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
       Color Scheme: map
@@ -150,45 +67,65 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        turtlebot1/base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turtlebot1/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/base_scan:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/camera_rgb_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turtlebot1/camera_rgb_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turtlebot1/caster_back_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/caster_back_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turtlebot1/wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turtlebot1/wheel_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
       Name: RobotModel-Tbot
       TF Prefix: ""
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/LaserScan
-      Color: 255; 0; 4
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: LaserScan-R2D2
-      Position Transformer: XYZ
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.029999999329447746
-      Style: Flat Squares
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Best Effort
-        Value: /r2d2/scan
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -218,10 +155,69 @@ Visualization Manager:
         Durability Policy: Volatile
         Filter size: 10
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /turtlebot1/scan
       Use Fixed Frame: true
       Use rainbow: true
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        map:
+          Value: true
+        turtlebot1/base_footprint:
+          Value: true
+        turtlebot1/base_link:
+          Value: true
+        turtlebot1/base_scan:
+          Value: true
+        turtlebot1/camera_link:
+          Value: true
+        turtlebot1/camera_rgb_frame:
+          Value: true
+        turtlebot1/camera_rgb_optical_frame:
+          Value: true
+        turtlebot1/caster_back_left_link:
+          Value: true
+        turtlebot1/caster_back_right_link:
+          Value: true
+        turtlebot1/imu_link:
+          Value: true
+        turtlebot1/odom:
+          Value: true
+        turtlebot1/wheel_left_link:
+          Value: true
+        turtlebot1/wheel_right_link:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        map:
+          turtlebot1/odom:
+            turtlebot1/base_footprint:
+              turtlebot1/base_link:
+                turtlebot1/base_scan:
+                  {}
+                turtlebot1/camera_link:
+                  turtlebot1/camera_rgb_frame:
+                    turtlebot1/camera_rgb_optical_frame:
+                      {}
+                turtlebot1/caster_back_left_link:
+                  {}
+                turtlebot1/caster_back_right_link:
+                  {}
+                turtlebot1/imu_link:
+                  {}
+                turtlebot1/wheel_left_link:
+                  {}
+                turtlebot1/wheel_right_link:
+                  {}
+      Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
@@ -269,7 +265,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 15.139144897460938
+      Distance: 5.919236660003662
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -284,18 +280,18 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8053983449935913
+      Pitch: 0.6903983950614929
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.043588161468506
+      Yaw: 4.893587589263916
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1025
+  Height: 1021
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d900000396fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007901000003fb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004400000396000000fd01000003fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000011000000396fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000004400000396000000d301000003fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000004950000039600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d90000038afc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007901000003fb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004c0000038a000000fd01000003fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c0000026100000001000001100000038afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000004c0000038a000000d301000003fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000004950000038a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Tool Properties:

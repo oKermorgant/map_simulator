@@ -4,7 +4,7 @@ This package provides a 2D simulator for mobile robots in ROS 2. The environment
 
 The motivation is to have a light weight simulator to demonstrate and test navigation capabilities, while using a simple map-based environment. The simulation is based on OpenCV.
 
-![](example/batS.jpg)
+![](example/multirobot/multi_rviz.png)
 
 ## Dependencies
 
@@ -84,7 +84,26 @@ This allows testing high-lever controllers for steering wheels robots.
 
 ## Examples
 
-See the `example` folder to see how to:
-- spawn R2D2 with default laser props
-- spawn Turtlebot3 with Gazebo-specified laser props
-- run RViz to display robots, laserscans and the map
+### Multi robot with 3 R2D2
+
+The `example/multirobot` folder shows how to run a simulation and spawn 3 robots. Sliders allow controlling the robots manually.
+Defaut laser scanners are simulated as the robots do not have any in the URDF.
+
+```
+ros2 launch map_simulator multi_launch.py
+```
+
+### Turtlebot world
+
+The `example/turtlebot3` folder shows how to run a simulation and spawn a Turtlebot3 in the classical turtlebot world.
+Sliders allow controlling the robot manually.
+
+In this case the URDF has a laser scanner (as Gazebo plugin) and the corresponding properties are used.
+
+If `sim_wheels` is `True` then an additional node changes `cmd_vel` into current wheel angles.
+
+```
+ros2 launch map_simulator turtlebot3_world_launch.py
+```
+
+![](example/turtlebot3/rviz.png)
