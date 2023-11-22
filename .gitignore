@@ -1,5 +1,6 @@
 # OK general gitignore
 .directory
+.vscode/
 # Compiled source #
 ###################
 *.com

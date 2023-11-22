@@ -1,12 +1,17 @@
 # map_simulator
 
-This package provides a 2D simulator for mobile robots. The environment is based on a standard ROS map. Robots move through a `cmd_vel` topic and may publish a laser scan.
+This package provides a 2D simulator for mobile robots in ROS 2. The environment is based on a standard ROS map. Robots move through a `cmd_vel` topic and may publish a laser scan.
 
 The motivation is to have a light weight simulator to demonstrate and test navigation capabilities, while using a simple map-based environment. The simulation is based on OpenCV.
 
-The included launch files use the `simple_launch` package.
+![](example/batS.jpg)
 
-## Running the simulation
+## Dependencies
+
+- OpenCV
+- [simple_launch](https://github.com/oKermorgant/simple_launch), installable through `apt install ros-${ROS_DISTRO}-simple-launch`
+
+# Running the simulation
 
 Just launch `simulation2d_launch.py` by passing the `map` argument that should point to the yaml file of the map.
 

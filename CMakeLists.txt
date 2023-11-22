@@ -90,5 +90,5 @@ install(DIRECTORY launch example
 install(PROGRAMS src/kinematics.py
     DESTINATION lib/${PROJECT_NAME})
 
-ament_export_libraries(simulator)
+#ament_export_libraries(simulator)
 ament_package()
