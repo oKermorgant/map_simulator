@@ -9,6 +9,7 @@ def generate_launch_description():
     sl.declare_arg('sim_wheels', default_value=False)
 
     # force joints to 0 if wheels are not simulated
+    # this expression is not robust to lower case true or false
     zero_joints = sl.py_eval('not ', sl.arg('sim_wheels'))
 
     sl.include('map_simulator', 'simulation2d_launch.py',
