@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /LaserScan-R2D21/Topic1
+        - /TF1
       Splitter Ratio: 0.5
     Tree Height: 742
   - Class: rviz_common/Selection
@@ -403,6 +404,162 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        beacon1:
+          Value: true
+        beacon1_gt:
+          Value: false
+        map:
+          Value: false
+        r2d2/base_footprint:
+          Value: false
+        r2d2/base_link:
+          Value: false
+        r2d2/box:
+          Value: false
+        r2d2/head:
+          Value: false
+        r2d2/left_back_wheel:
+          Value: false
+        r2d2/left_base:
+          Value: false
+        r2d2/left_front_wheel:
+          Value: false
+        r2d2/left_leg:
+          Value: false
+        r2d2/odom:
+          Value: false
+        r2d2/right_back_wheel:
+          Value: false
+        r2d2/right_base:
+          Value: false
+        r2d2/right_front_wheel:
+          Value: false
+        r2d2/right_leg:
+          Value: false
+        r2d3/base_footprint:
+          Value: false
+        r2d3/base_link:
+          Value: false
+        r2d3/box:
+          Value: false
+        r2d3/head:
+          Value: false
+        r2d3/left_back_wheel:
+          Value: false
+        r2d3/left_base:
+          Value: false
+        r2d3/left_front_wheel:
+          Value: false
+        r2d3/left_leg:
+          Value: false
+        r2d3/odom:
+          Value: false
+        r2d3/right_back_wheel:
+          Value: false
+        r2d3/right_base:
+          Value: false
+        r2d3/right_front_wheel:
+          Value: false
+        r2d3/right_leg:
+          Value: false
+        r2d4/base_footprint:
+          Value: false
+        r2d4/base_link:
+          Value: false
+        r2d4/box:
+          Value: false
+        r2d4/head:
+          Value: false
+        r2d4/left_back_wheel:
+          Value: false
+        r2d4/left_base:
+          Value: false
+        r2d4/left_front_wheel:
+          Value: false
+        r2d4/left_leg:
+          Value: false
+        r2d4/odom:
+          Value: false
+        r2d4/right_back_wheel:
+          Value: false
+        r2d4/right_base:
+          Value: false
+        r2d4/right_front_wheel:
+          Value: false
+        r2d4/right_leg:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          beacon1:
+            {}
+          beacon1_gt:
+            {}
+          r2d2/odom:
+            r2d2/base_footprint:
+              r2d2/base_link:
+                r2d2/head:
+                  r2d2/box:
+                    {}
+                r2d2/left_leg:
+                  r2d2/left_base:
+                    r2d2/left_back_wheel:
+                      {}
+                    r2d2/left_front_wheel:
+                      {}
+                r2d2/right_leg:
+                  r2d2/right_base:
+                    r2d2/right_back_wheel:
+                      {}
+                    r2d2/right_front_wheel:
+                      {}
+          r2d3/odom:
+            r2d3/base_footprint:
+              r2d3/base_link:
+                r2d3/head:
+                  r2d3/box:
+                    {}
+                r2d3/left_leg:
+                  r2d3/left_base:
+                    r2d3/left_back_wheel:
+                      {}
+                    r2d3/left_front_wheel:
+                      {}
+                r2d3/right_leg:
+                  r2d3/right_base:
+                    r2d3/right_back_wheel:
+                      {}
+                    r2d3/right_front_wheel:
+                      {}
+          r2d4/odom:
+            r2d4/base_footprint:
+              r2d4/base_link:
+                r2d4/head:
+                  r2d4/box:
+                    {}
+                r2d4/left_leg:
+                  r2d4/left_base:
+                    r2d4/left_back_wheel:
+                      {}
+                    r2d4/left_front_wheel:
+                      {}
+                r2d4/right_leg:
+                  r2d4/right_base:
+                    r2d4/right_back_wheel:
+                      {}
+                    r2d4/right_front_wheel:
+                      {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -449,25 +606,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 16.60334587097168
+      Distance: 7.236717224121094
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.9380419254302979
-        Y: -1.2310858964920044
-        Z: -0.7650570273399353
+        X: 0.753017246723175
+        Y: 0.6603835225105286
+        Z: 0.3566637933254242
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6453984975814819
+      Pitch: 0.5403985977172852
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.023591995239258
+      Yaw: 4.4285969734191895
     Saved: ~
 Window Geometry:
   Displays:

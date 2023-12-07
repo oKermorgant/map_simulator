@@ -14,19 +14,22 @@
 #include <opencv2/core.hpp>
 #include <tinyxml2.h>
 #include <random>
-#include <map_simulator/srv/spawn.hpp>
 
-#ifdef WITH_ANCHORS
-#include <anchor_msgs/msg/range_with_covariance.hpp>
+#include <map_simulator/srv/spawn.hpp>
 #include <map_simulator/srv/add_anchor.hpp>
+
+#ifdef WITH_BUILTIN_RANGE
+#include <map_simulator/msg/range.hpp>
+using map_simulator::msg::Range;
+#else
+#include <sensor_msgs/msg/range.hpp>
+using sensor_msgs::msg::Range;
 #endif
 
 namespace map_simulator
 {
 
-#ifdef WITH_ANCHORS
 using Anchor = srv::AddAnchor::Request;
-#endif
 
 struct Pose2D
 {
@@ -69,10 +72,8 @@ class Robot
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
 
   // anchors stuff
-#ifdef WITH_ANCHORS
-  rclcpp::Publisher<anchor_msgs::msg::RangeWithCovariance>::SharedPtr range_pub;
-  anchor_msgs::msg::RangeWithCovariance rangeFrom(const Anchor &anchor);
-#endif
+  rclcpp::Publisher<Range>::SharedPtr range_pub;
+  Range rangeFrom(const Anchor &anchor);
 
   void loadModel(const std::string &urdf_xml, bool force_scanner, bool zero_joints, bool static_tf);
 
@@ -175,9 +176,7 @@ public:
   void move(double dt);
 
   // anchors stuff
-#ifdef WITH_ANCHORS
   void publishRanges(const std::vector<Anchor> &anchors);
-#endif
 
   inline bool connected() const
   {

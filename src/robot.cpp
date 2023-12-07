@@ -340,20 +340,19 @@ void Robot::write(cv::Mat &img) const
   cv::fillConvexPoly(img, contour(), color);
 }
 
-#ifdef WITH_ANCHORS
-anchor_msgs::msg::RangeWithCovariance Robot::rangeFrom(const Anchor &anchor)
+Range Robot::rangeFrom(const Anchor &anchor)
 {
-  anchor_msgs::msg::RangeWithCovariance range;
+  Range range;
   range.header.stamp = stamp;
-  range.header.frame_id = anchor.frame;
-  range.moving_frame = transform.child_frame_id;  // assume receiver is placed on base link
-  range.range_max = anchor.range_max;
-  range.range_min = anchor.range_min;
+  range.header.frame_id = anchor.frame_id;
+  range.field_of_view = 2*M_PI;
+  range.max_range = anchor.max_range;
+  range.min_range = anchor.min_range;
   const auto dx{anchor.x-pose.x};
   const auto dy{anchor.y-pose.y};
   const auto real_range{sqrt(dx*dx + dy*dy)};
-  range.range = withNoise(real_range, anchor.covariance_factor_real);
-  range.covariance = anchor.covariance_factor * real_range;
+  range.range = withNoise(real_range, anchor.variance_factor_real);
+  range.variance = anchor.variance_factor * real_range;
   return range;
 }
 
@@ -363,12 +362,11 @@ void Robot::publishRanges(const std::vector<Anchor> &anchors)
   if(anchors.empty())
     return;
   if(!range_pub)
-    range_pub = sim_node->create_publisher<anchor_msgs::msg::RangeWithCovariance>
+    range_pub = sim_node->create_publisher<Range>
         (robot_namespace + "ranges", 10);
 
   for(const auto &anchor: anchors)
     range_pub->publish(rangeFrom(anchor));
 }
-#endif
 
 }

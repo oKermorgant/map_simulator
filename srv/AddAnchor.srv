@@ -1,8 +1,8 @@
-string frame
+string frame_id
 float64 x 0.
 float64 y 0.
-float64 covariance_factor 0.01          # published covariance factor (covariance = factor * range)
-float64 covariance_factor_real 0.01     # simulated covariance (real covariance = real factor * range)
-float64 range_min 0.
-float64 range_max 100.
+float64 variance_factor 0.01          # published variance (variance = factor * range)
+float64 variance_factor_real 0.01     # simulated variance (real variance = real factor * range)
+float64 min_range 0.
+float64 max_range 100.
 ---

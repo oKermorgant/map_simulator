@@ -37,12 +37,10 @@ SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
        [&](const Spawn::Request::SharedPtr request, Spawn::Response::SharedPtr )
   {addRobot(*request);});
 
-#ifdef WITH_ANCHORS
   anchor_srv = create_service<srv::AddAnchor>
       ("/simulator/add_anchor",
        [&](const srv::AddAnchor::Request::SharedPtr anchor, srv::AddAnchor::Response::SharedPtr)
   {addAnchor(*anchor);});
-#endif
 }
 
 void SimulatorNode::addRobot(const Spawn::Request &spec)
@@ -85,28 +83,26 @@ void SimulatorNode::removeRobotAt(int x, int y)
   {return robot.collidesWith(x,y);});
 }
 
-#ifdef WITH_ANCHORS
 void SimulatorNode::addAnchor(const Anchor &anchor)
 {
   auto twin = std::find_if(anchors.begin(), anchors.end(),
-                           [anchor](const auto &other){return anchor.frame == other.frame;});
+                           [anchor](const auto &other){return anchor.frame_id == other.frame_id;});
   if(twin != anchors.end())
   {
-    RCLCPP_WARN(get_logger(), "Cannot add %s: already exists", anchor.frame.c_str());
+    RCLCPP_WARN(get_logger(), "Cannot add %s: already exists", anchor.frame_id.c_str());
     return;
   }
 
   anchors.push_back(anchor);
-  anchors.back().covariance_factor_real = std::max(sqrt(anchors.back().covariance_factor_real), 1e-9);
+  anchors.back().variance_factor_real = std::max(sqrt(anchors.back().variance_factor_real), 1e-9);
   geometry_msgs::msg::TransformStamped anchor_tf;
   anchor_tf.header.stamp = now();
   anchor_tf.header.frame_id = "map";
-  anchor_tf.child_frame_id = anchor.frame + "_gt";
+  anchor_tf.child_frame_id = anchor.frame_id + "_gt";
   anchor_tf.transform.translation.x = anchor.x;
   anchor_tf.transform.translation.y = anchor.y;
   Robot::publishStaticTF(anchor_tf);
 }
-#endif
 
 void SimulatorNode::refresh(const rclcpp::Time &now)
 {
@@ -117,9 +113,7 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
     if(robot.connected())
     {
       robot.move(dt);
-#ifdef WITH_ANCHORS
       robot.publishRanges(anchors);
-#endif
     }
   }
 

@@ -7,6 +7,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(urdf REQUIRED)
@@ -18,21 +19,17 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
-find_package(anchor_msgs)
-
 set(CMAKE_CXX_STANDARD 17)
 
-set(anchor_pkg "")
-set(anchor_exec "")
-if(${anchor_msgs_FOUND})
-    add_definitions(-DWITH_ANCHORS)
-    set(anchor_pkg "anchor_msgs")
-    set(anchor_exec "add_anchor")
+if("$ENV{ROS_DISTRO}" STRLESS_EQUAL "humble")
+    add_definitions(-DWITH_BUILTIN_RANGE)
+    rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv" "srv/AddAnchor.srv" "msg/Range.msg"
+                            DEPENDENCIES std_msgs)
+else()
+    rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv" "srv/AddAnchor.srv")
 endif()
 
-rosidl_generate_interfaces(${PROJECT_NAME} "srv/Spawn.srv" "srv/AddAnchor.srv")
-
-if("$ENV{ROS_DISTRO}" STREQUAL "galactic" OR "$ENV{ROS_DISTRO}" STREQUAL "foxy")
+if("$ENV{ROS_DISTRO}" STRLESS_EQUAL "galactic")
     set(LEGACY_IDL TRUE)
 else()
     set(LEGACY_IDL FALSE)
@@ -40,7 +37,6 @@ endif()
 if(NOT ${LEGACY_IDL})
     rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 endif()
-
 
 add_executable(simulator src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
 target_include_directories(simulator PRIVATE include
@@ -62,24 +58,13 @@ else()
     target_link_libraries(spawn "${cpp_typesupport_target}")
 endif()
 
-if(${anchor_msgs_FOUND})
-    add_executable(add_anchor src/add_anchor.cpp)
-    ament_target_dependencies(add_anchor rclcpp)
-    if(${LEGACY_IDL})
-        rosidl_target_interfaces(add_anchor ${PROJECT_NAME} "rosidl_typesupport_cpp")
-    else()
-        target_link_libraries(add_anchor "${cpp_typesupport_target}")
-    endif()
-endif()
-
-
 if(NOT WIN32)
   ament_environment_hooks(
     "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
     )
 endif()
 
-install(TARGETS simulator spawn ${anchor_exec}
+install(TARGETS simulator spawn
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})

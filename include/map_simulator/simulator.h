@@ -7,10 +7,7 @@
 #include <map_simulator/srv/spawn.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
-#ifdef WITH_ANCHORS
 #include <map_simulator/srv/add_anchor.hpp>
-#include <map_simulator/anchor.h>
-#endif
 
 namespace map_simulator
 {
@@ -38,11 +35,9 @@ protected:
 
   void scanForDescriptions();
 
-#ifdef WITH_ANCHORS
   rclcpp::Service<srv::AddAnchor>::SharedPtr anchor_srv;
   std::vector<Anchor> anchors;
   void addAnchor(const Anchor &anchor);
-#endif
 
   void refresh(const rclcpp::Time &now);
 };

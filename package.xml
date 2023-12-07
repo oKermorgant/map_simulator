@@ -14,7 +14,6 @@
   <depend>sensor_msgs</depend>
   <depend>urdf</depend>
   <depend>tf2_ros</depend>
-  <depend>anchor_msgs</depend>
   <depend>yaml-cpp</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>

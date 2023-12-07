@@ -58,11 +58,13 @@ The `spawn` node will spawn anything at the requested pose / size. If no `robot_
 
 ## Spawning range beacons
 
-If the package `anchor_msgs` is available at compile-time then the simulator can render range measurements between the robots and some beacons put at any (x,y) position. The `spawn_anchor_launch.py` offers a simple way to spawn such anchors.
-- the real anchor positions are given as the `<name>_gt` frame under `/tf`,
-- any localization algorithm should use the `<name>` frame, that is at the same place as `<name>_gt` if `publish_gt` is true in `spawn_anchor_launch.py`. Otherwise, some range-only SLAM node should be used to estimate the positions of the anchors from some custom initialization.
+The simulator can render range measurements between the robots and some beacons put at any (x,y) position. It relies on the `sensor_msgs/Range` since ROS 2 Iron (that includes a variance). For older versions of ROS 2, a similar message is defined in `map_simulator`.
 
-As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace.
+The `spawn_anchor_launch.py` offers a simple way to spawn such anchors.
+- the real anchor positions are given as the `<name>_gt` frame under `/tf`,
+- any localization algorithm should use the `<name>` frame, that is at the same place as `<name>_gt` if `publish_gt` is true in `spawn_anchor_launch.py`. Otherwise, some range-only SLAM node should be used to estimate the positions of the anchors together with the position of the robot.
+
+As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace. The same topic is used for all beacons, they can be identified with the `header.frame_id` of the Range message.
 
 ## Using steering wheels robots
 
