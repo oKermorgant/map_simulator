@@ -67,7 +67,8 @@ void OccupancyGrid::initMap(const std::string & map_file, float max_height, floa
 
 void OccupancyGrid::computeLaserScans(std::list<Robot> &robots)
 {
-  out_img = map_img.clone();
+  if(use_display)
+    out_img = map_img.clone();
 
   // update robot pixel coord
   for(auto &robot: robots)
@@ -122,7 +123,8 @@ void OccupancyGrid::computeLaserScan(Robot &robot, const std::list<Robot> &robot
       if(hit || occ_map.at<uchar>(v, u) == 0)
       {
         range = (k-0.5f)*res;
-        cv::line(out_img, origin, {u, v}, robot.laser_color);
+        if(use_display)
+          cv::line(out_img, origin, {u, v}, robot.laser_color);
         break;
       }
     }
