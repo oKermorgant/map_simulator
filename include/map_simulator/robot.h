@@ -131,29 +131,27 @@ public:
   cv::Scalar color;
 
   std::array<double, 3> size;
+  std::vector<cv::Point> contour;
+
   double x() const {return pose.x;}
   double y() const {return pose.y;}
   void write(cv::Mat &img) const;
 
-  inline double radius() const
-  {
-    return size[0];
-  }
+  inline double radius() const {return size[0];}
 
-  std::vector<cv::Point> contour() const
+  void updateContour()
   {
     const int W(size[0]/2);
     const int L(size[1]/2);
     const int O(size[2]);
-    std::vector<cv::Point> poly{{-L+O, -W},
-                                {L+O, -W},
-                                {L+O, W},
-                                {-L+O, W}};
+    contour = {{-L+O, -W},
+               {L+O, -W},
+               {L+O, W},
+               {-L+O, W}};
     const auto c{cos(pose.theta)};
     const auto s{sin(pose.theta)};
-    for(auto &p: poly)
+    for(auto &p: contour)
       p = {int(pos_pix.x + c*p.x + s*p.y), int(pos_pix.y - s*p.x + c*p.y)};
-    return poly;
   }
 
   inline bool isCircle() const {return size[1] == 0.;}

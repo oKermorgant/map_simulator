@@ -43,7 +43,7 @@ target_include_directories(simulator PRIVATE include
                            ${OpenCV_INCLUDE_DIRS}
                            ${YamlCpp_INCLUDE_DIRS})
 target_link_libraries(simulator ${OpenCV_LIBRARIES} yaml-cpp stdc++fs tinyxml2)
-ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ${anchor_pkg})
+ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf)
 if(${LEGACY_IDL})
     rosidl_target_interfaces(simulator ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()

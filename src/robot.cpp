@@ -63,6 +63,8 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::
     linear_noise(_linear_noise), angular_noise(_angular_noise),
     laser_color(_laser_color), color(_color), size(size)
 {
+    if(!isCircle())
+        updateContour();
 }
 
 void Robot::publish(tf2_ros::TransformBroadcaster &br)
@@ -293,6 +295,10 @@ void Robot::move(double dt)
 
   pose.updateFrom(vxn, vyn, wzn, dt);
 
+  // compute contour is we have a square shape
+  if(!isCircle())
+      updateContour();
+
   // write actual covariance, proportional to velocity
   odom.twist.covariance[0] = std::max(0.0001, std::abs(vx)*linear_noise*linear_noise);
   odom.twist.covariance[7] = std::max(0.0001, std::abs(vy)*linear_noise*linear_noise);
@@ -326,8 +332,7 @@ bool Robot::collidesWith(int u, int v) const
     return (u-pos_pix.x)*(u-pos_pix.x) + (v-pos_pix.y)*(v-pos_pix.y)
         < radius()*radius();
   }
-  const auto poly(contour());
-  return cv::pointPolygonTest(poly, cv::Point{u,v}, false) != -1;
+  return cv::pointPolygonTest(contour, cv::Point{u,v}, false) != -1;
 }
 
 void Robot::write(cv::Mat &img) const
@@ -337,7 +342,7 @@ void Robot::write(cv::Mat &img) const
     cv::circle(img, pos_pix, radius(), color, -1);
     return;
   }
-  cv::fillConvexPoly(img, contour(), color);
+  cv::fillConvexPoly(img, contour, color);
 }
 
 Range Robot::rangeFrom(const Anchor &anchor)
