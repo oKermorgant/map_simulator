@@ -12,7 +12,7 @@ SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
 
   const auto share_folder{ament_index_cpp::get_package_share_directory("map_simulator")};
 
-  const auto map          {declare_parameter<std::string>("map", share_folder + "/example/house.yaml")};
+  const auto map          {declare_parameter<std::string>("map", share_folder + "/example/multirobot/house.yaml")};
   const auto max_height   {declare_parameter<int>("max_height", 800)};
   const auto max_width    {declare_parameter<int>("max_width", 1200)};
   const auto use_display  {declare_parameter<bool>("display", true)};
