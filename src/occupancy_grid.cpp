@@ -53,12 +53,12 @@ void OccupancyGrid::initMap(const std::string & map_file, float max_height, floa
   this->use_display = use_display;
   if(use_display)
   {
-    cv::namedWindow("Simulator 2D", cv::WINDOW_NORMAL);
+    cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     const float scale = std::min(max_height/occ_map.rows, max_width/occ_map.cols);
     if(scale != 0.f && scale < 1)
-      cv::resizeWindow("Simulator 2D", int(scale*occ_map.cols), int(scale*occ_map.rows));
+      cv::resizeWindow(window_name, int(scale*occ_map.cols), int(scale*occ_map.rows));
     else
-      cv::resizeWindow("Simulator 2D", occ_map.cols, occ_map.rows);
+      cv::resizeWindow(window_name, occ_map.cols, occ_map.rows);
   }
 
   cv::cvtColor(occ_map, map_img, cv::COLOR_GRAY2BGR);
@@ -86,7 +86,7 @@ void OccupancyGrid::computeLaserScans(std::list<Robot> &robots)
     for(const auto &robot: robots)
       robot.write(out_img);
 
-    cv::imshow("Simulator 2D", out_img);
+    cv::imshow(window_name, out_img);
     cv::waitKey(1);
   }
 }

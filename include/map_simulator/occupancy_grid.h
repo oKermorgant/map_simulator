@@ -8,6 +8,8 @@
 namespace map_simulator
 {
 
+constexpr auto window_name{"Map Simulator"};
+
 class OccupancyGrid
 {
   cv::Mat map_img, occ_map, out_img;

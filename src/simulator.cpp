@@ -20,7 +20,7 @@ SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
   grid.initMap(map, max_height, max_width, use_display);
   if(use_display)
   {
-    cv::setMouseCallback("Simulator 2D", [](int event, int x, int y, int , void* node_ptr)
+    cv::setMouseCallback(window_name, [](int event, int x, int y, int , void* node_ptr)
     {
       if(event != cv::EVENT_LBUTTONDBLCLK)
         return;

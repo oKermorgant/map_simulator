@@ -6,8 +6,6 @@
 namespace map_simulator
 {
 
-
-
 void adaptNamespace(std::string &topic, std::string ns)
 {
   if(ns[0] == '/')
