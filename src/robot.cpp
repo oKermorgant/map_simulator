@@ -90,18 +90,18 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
     js_pub->publish(*joint_states);
   }
 
+  // publish map -> odom, whether as separate ground truth or available transform
+  static geometry_msgs::msg::TransformStamped pose_gt;
+  pose_gt.header.frame_id = "map";
+  pose_gt.child_frame_id = odom.child_frame_id;
+  pose_gt.header.stamp = stamp;
+  pose_gt.transform.translation.x = pose.x;
+  pose_gt.transform.translation.y = pose.y;
+  pose_gt.transform.rotation.w = cos(pose.theta/2.);
+  pose_gt.transform.rotation.z = sin(pose.theta/2.);
   if(!static_tf)
-  {
-    geometry_msgs::msg::TransformStamped pose_gt;
-    pose_gt.header.frame_id = "map";
-    pose_gt.child_frame_id = odom.child_frame_id + "_gt";
-    pose_gt.header.stamp = stamp;
-    pose_gt.transform.translation.x = pose.x;
-    pose_gt.transform.translation.y = pose.y;
-    pose_gt.transform.rotation.w = cos(pose.theta/2.);
-    pose_gt.transform.rotation.z = sin(pose.theta/2.);
-    br.sendTransform(pose_gt);
-  }
+    pose_gt.child_frame_id += "_gt";
+  br.sendTransform(pose_gt);
 }
 
 void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
@@ -262,7 +262,7 @@ void Robot::loadModel(const std::string &urdf_xml,
     }
   }
 
-  if(static_tf)
+  /*if(static_tf)
   {
     geometry_msgs::msg::TransformStamped odom2map;
     odom2map.header.stamp = sim_node->now();
@@ -273,7 +273,7 @@ void Robot::loadModel(const std::string &urdf_xml,
     odom2map.transform.rotation.z = sin(pose.theta/2);
     odom2map.transform.rotation.w = cos(pose.theta/2);
     publishStaticTF(odom2map);
-  }
+  }*/
   this->static_tf = static_tf;
 
   // stop listening to robot_description, we got what we wanted

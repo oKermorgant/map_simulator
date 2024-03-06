@@ -34,7 +34,7 @@ This node takes the following arguments, which reflect the request part of a `Sp
 - `robot_color`: a length-3 RGB (0-255) int array
 - `laser_color`: a length-3 RGB (0-255) int array
 - `force_scanner`: a Boolean (default True) to publish laser scans even if the URDF does not contain any laser scanner
-- `static_tf_odom`: a Boolean (default False) to run a static TF broadcaster of the map -> odom frame of this robot
+- `static_tf_odom`: a Boolean (default False) to publish the true map -> odom frame of this robot, otherwise adds a `_gt` suffix
 - `zero_joints`:a Boolean (default False) to publish 0-values for all non-fixed joints of the robot
 - `linear_noise` and `angular_noise`: a float (default 0) for the standard deviation of the noise added to the robot velocity twist,
 
