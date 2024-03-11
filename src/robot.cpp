@@ -63,6 +63,7 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::
 {
     if(!isCircle())
         updateContour();
+    pose.writeTo(initial_pose);
 }
 
 void Robot::publish(tf2_ros::TransformBroadcaster &br)
@@ -90,18 +91,20 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
     js_pub->publish(*joint_states);
   }
 
-  // publish map -> odom, whether as separate ground truth or available transform
-  static geometry_msgs::msg::TransformStamped pose_gt;
-  pose_gt.header.frame_id = "map";
-  pose_gt.child_frame_id = odom.child_frame_id;
-  pose_gt.header.stamp = stamp;
-  pose_gt.transform.translation.x = pose.x;
-  pose_gt.transform.translation.y = pose.y;
-  pose_gt.transform.rotation.w = cos(pose.theta/2.);
-  pose_gt.transform.rotation.z = sin(pose.theta/2.);
-  if(!static_tf)
-    pose_gt.child_frame_id += "_gt";
-  br.sendTransform(pose_gt);
+  if(initial_pose.child_frame_id.empty())
+  {
+    geometry_msgs::msg::TransformStamped pose_gt;
+    pose_gt.header.frame_id = "map";
+    pose_gt.child_frame_id = odom.child_frame_id + "_gt";
+    pose_gt.header.stamp = stamp;
+    pose.writeTo(pose_gt);
+    br.sendTransform(pose_gt);
+  }
+  else
+  {
+    initial_pose.header.stamp = stamp;
+    br.sendTransform(initial_pose);
+  }
 }
 
 void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
@@ -262,19 +265,12 @@ void Robot::loadModel(const std::string &urdf_xml,
     }
   }
 
-  /*if(static_tf)
+  if(static_tf)
   {
-    geometry_msgs::msg::TransformStamped odom2map;
-    odom2map.header.stamp = sim_node->now();
-    odom2map.header.frame_id = "map";
-    odom2map.child_frame_id = odom.header.frame_id;
-    odom2map.transform.translation.x = pose.x;
-    odom2map.transform.translation.y = pose.y;
-    odom2map.transform.rotation.z = sin(pose.theta/2);
-    odom2map.transform.rotation.w = cos(pose.theta/2);
-    publishStaticTF(odom2map);
-  }*/
-  this->static_tf = static_tf;
+    initial_pose.header.frame_id = "map";
+    initial_pose.child_frame_id = odom.header.frame_id;
+    pose.writeTo(initial_pose);
+  }
 
   // stop listening to robot_description, we got what we wanted
   description_sub.reset();
@@ -311,14 +307,9 @@ void Robot::move(double dt)
   }
 
   // update noised odometry
-  Pose2D rel_pose{odom.pose.pose.position.x, odom.pose.pose.position.y,
-        2*atan2(odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)};
+  Pose2D rel_pose(odom.pose.pose);
   rel_pose.updateFrom(vxn, vyn, wzn, dt);
-
-  odom.pose.pose.position.x = rel_pose.x;
-  odom.pose.pose.position.y = rel_pose.y;
-  odom.pose.pose.orientation.z = sin(rel_pose.theta/2);
-  odom.pose.pose.orientation.w = cos(rel_pose.theta/2);
+  rel_pose.writeTo(odom.pose.pose);
 
   // TODO compute pose covariance for info (not used by EKFs anyway)
 }

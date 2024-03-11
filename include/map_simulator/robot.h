@@ -34,12 +34,31 @@ using Anchor = srv::AddAnchor::Request;
 struct Pose2D
 {
   double x=0, y=0, theta=0;
+  inline Pose2D(double x=0, double y=0, double theta=0) : x{x}, y{y}, theta{theta} {}
+  inline Pose2D(const geometry_msgs::msg::Pose &pose)
+    : x{pose.position.x}, y{pose.position.y}, theta{2*atan2(pose.orientation.z, pose.orientation.w)}
+  {}
   inline void updateFrom(double vx, double vy, double wz, double dt)
   {
     theta += .5*wz*dt;
     x += (vx*cos(theta) - vy*sin(theta))*dt;
     y += (vx*sin(theta) + vy*cos(theta))*dt;
     theta += .5*wz*dt;
+  }
+
+  inline void writeTo(geometry_msgs::msg::TransformStamped &tr) const
+  {
+    tr.transform.translation.x = x;
+    tr.transform.translation.y = y;
+    tr.transform.rotation.w = cos(theta/2);
+    tr.transform.rotation.z = sin(theta/2);
+  }
+  inline void writeTo(geometry_msgs::msg::Pose &pose) const
+  {
+    pose.position.x = x;
+    pose.position.y = y;
+    pose.orientation.w = cos(theta/2);
+    pose.orientation.z = sin(theta/2);
   }
 };
 
@@ -56,7 +75,7 @@ class Robot
   inline static constexpr auto RECTANGLE = srv::Spawn::Request::SHAPE_RECTANGLE;
 
   nav_msgs::msg::Odometry odom;
-  geometry_msgs::msg::TransformStamped transform;
+  geometry_msgs::msg::TransformStamped transform, initial_pose;
 
   // robot specs
   std::string robot_namespace;
@@ -66,7 +85,6 @@ class Robot
   Pose2D laser_pose;
 
   // optional publishers
-  bool static_tf{true};
   bool zero_joints = false;
   sensor_msgs::msg::JointState::SharedPtr joint_states;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr js_pub;
@@ -106,8 +124,10 @@ public:
         double _linear_noise, double _angular_noise);
 
   inline void resetTo(const Pose2D _pose)
-  {
+  {    
     pose = _pose;
+    if(!initial_pose.child_frame_id.empty())
+      pose.writeTo(initial_pose);
     // also reset odom
     odom.pose.pose = geometry_msgs::msg::Pose();
     odom.twist.twist = geometry_msgs::msg::Twist();
