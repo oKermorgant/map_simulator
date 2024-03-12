@@ -1,6 +1,6 @@
 # to be used with slider_publisher
 cmd:
-    type: std_msgs/Float64MultiArray
+    type: std_msgs/Float32MultiArray
     v:
         min: -1
         max: 1
