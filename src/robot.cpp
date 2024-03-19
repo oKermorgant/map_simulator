@@ -192,7 +192,7 @@ void Robot::loadModel(const std::string &urdf_xml,
   {
     if(!scan_init)
     {
-      scan.angle_max = 2*M_PI/3;
+      scan.angle_max = 49*M_PI/50;
       scan.angle_min = -scan.angle_max;
       scan.range_min = 0.1;
       scan.range_max = 5;
@@ -298,8 +298,8 @@ void Robot::move(double dt)
   odom.twist.covariance[7] = std::max(0.0001, std::abs(vy)*linear_noise*linear_noise);
   odom.twist.covariance[35] = std::max(0.0001, std::abs(wz)*angular_noise*angular_noise);
 
-  // use another noise for odometry unless perfect odom expected
-  if(!static_tf)
+  // use another noise for odometry unless perfect odom expected  
+  if(initial_pose.child_frame_id.empty())
   {
     vx = vxn = withNoise(vx, linear_noise);
     vy = vyn = withNoise(vy, linear_noise);

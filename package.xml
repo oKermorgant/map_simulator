@@ -16,8 +16,8 @@
   <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>yaml-cpp</depend>
-  <run_depend>ackermann_msgs</run_depend>
-  <run_depend>four_wheel_steering_msgs</run_depend>
+  <exec_depend>ackermann_msgs</exec_depend>
+  <exec_depend>four_wheel_steering_msgs</exec_depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
