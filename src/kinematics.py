@@ -6,16 +6,27 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 import numpy as np
+from math import isnan, cos, sin, tan, atan, sqrt
 from sys import exit
 
-dt = 0.02
+try:
+    from ackermann_msgs.msg import AckermannDrive
+except ModuleNotFoundError:
+    AckermannDrive = None
+try:
+    from four_wheel_steering_msgs.msg import FourWheelSteering
+except ModuleNotFoundError:
+    FourWheelSteering = None
+
+
+def sign(val):
+    return -1 if val < 0 else 1
 
 
 class Wheel:
-    rotate = True
+    dt = 0.2
 
     def __init__(self, joint):
         self.name = joint.name
@@ -23,11 +34,12 @@ class Wheel:
         self.val = 0.
 
     def move(self, w):
-        if self.rotate:
-            self.val += self.sign*w*dt
+        self.val += self.sign*w*Wheel.dt
 
 
 class SteeringJoint:
+    use_angle_cmd = True
+
     def __init__(self, joint=None, low=None, up=None):
         if joint is not None:
             self.name = joint.name
@@ -39,42 +51,67 @@ class SteeringJoint:
             self.up = up
         self.val = 0.
 
+    def adapt(self, angle, w):
+        '''
+        Returns current angle and velocity from the desired one
+        If desired angle is NaN, accepts any velocity
+        Otherwise, w is the max change rate, adapt it to the actual one
+        '''
+        if SteeringJoint.use_angle_cmd and not isnan(angle):
+            if w == 0. or isnan(w):
+                w = (angle - self.val)/Wheel.dt
+            else:
+                # w is a max rate
+                rate = (angle - self.val)/Wheel.dt
+                if abs(rate) < abs(w):
+                    w = rate
+                else:
+                    w = sign(rate)*w
+        return self.val, w
+
     def move(self, w):
-        self.val += w*dt
+        self.val += w*Wheel.dt
         if self.low is not None:
-            self.val = np.clip(self.val, self.low, self.up)
+            if self.val < self.low:
+                self.val = self.low
+            elif self.val > self.up:
+                self.val = self.up
 
 
 class Robot(Node):
-    def __init__(self, joints, cmd_dim):
+    def __init__(self, joints, cmd_type = None):
+
         super().__init__('kinematics')
         self.joints = joints
         self.state = JointState()
         self.state.name = [joint.name for joint in joints]
         self.state.position = [0. for _ in range(len(joints))]
         self.joint_pub = self.create_publisher(JointState, 'joint_states', 5)
-        self.cmd = [0. for _ in range(cmd_dim)]
 
-        Wheel.rotate = self.declare_parameter('rotate_wheels', True).value
+        from rcl_interfaces.msg import ParameterDescriptor
+        dt_description = ParameterDescriptor(description = 'Sampling time [s]')
+        Wheel.dt = self.declare_parameter('dt', 0.1, descriptor=dt_description).value
+
+        angle_description = ParameterDescriptor(description = 'Whether to use the steering angle cmd or only the velocity')
+        SteeringJoint.use_angle_cmd = self.declare_parameter('use_angle_cmd', True, descriptor=angle_description).value
 
         self.cmd_vel = Twist()
+        self.cmd_vel_pub = None
 
-        if self.declare_parameter('pub_cmd', False).value:
-            self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 5)
-        else:
-            self.cmd_vel_pub = None
+        if cmd_type is not None:
+            if self.declare_parameter('pub_cmd', True).value:
+                self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 5)
+            self.cmd = cmd_type()
+            self.cmd_sub = self.create_subscription(cmd_type, 'cmd', self.cmd_callback, 5)
 
-        if cmd_dim:
-            self.cmd_sub = self.create_subscription(Float32MultiArray, 'cmd', self.cmd_callback, 5)
-
-        self.timer = self.create_timer(dt, self.timer_callback)
+        self.timer = self.create_timer(Wheel.dt, self.timer_callback)
 
     def timer_callback(self):
         self.update()
         self.publish()
 
     def cmd_callback(self, msg):
-        self.cmd[:] = msg.data
+        self.cmd = msg
 
     def publish(self):
         self.state.header.stamp = self.get_clock().now().to_msg()
@@ -97,10 +134,11 @@ class Unicycle(Robot):
         self.left = left
         self.right = right
         self.mimic = left2 is not None
+        self.cmd = Twist()
 
         self.set_params(['b','r'])
 
-        # unicycle actually subscribes to cmd_vel
+        # unicycle actually subscribes to cmd_vel and just rotates the wheels accordingly
         self.cmd_vel_sub = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 5)
 
     def cmd_vel_callback(self, msg):
@@ -121,31 +159,32 @@ class Unicycle(Robot):
 
 class Bicycle(Robot):
     def __init__(self, front, rear, beta, L, r):
-        super().__init__([front, rear, beta], 2)
+        super().__init__([front, rear, beta], AckermannDrive)
         self.L = L
         self.r = r
         self.set_params(['L','r'])
 
     def update(self):
-        # got (v, beta dot) in self.cmd
-        v, bdot = self.cmd
-        beta = self.joints[2].val
+        # got (v, beta dot) in self.cmd as AckermannDrive msg
+        v = self.cmd.speed
 
-        # Twist
-        self.cmd_vel.linear.x = v * np.cos(beta)
-        self.cmd_vel.angular.z = v * np.sin(beta) / self.L
+        beta, bdot = self.joints[2].adapt(self.cmd.steering_angle, self.cmd.steering_angle_velocity)
+
+        # corresponding Twist
+        self.cmd_vel.linear.x = v * cos(beta)
+        self.cmd_vel.angular.z = v * sin(beta) / self.L
 
         # wheel velocities
         wf = v/self.r
         wr = self.cmd_vel.linear.x / self.r
 
-        for idx, vel in enumerate((wf, wr, bdot)):
-            self.joints[idx].move(vel)
+        for idx, w in enumerate((wf, wr, bdot)):
+            self.joints[idx].move(w)
 
 
 class Ackermann(Robot):
     def __init__(self, fls, frs, fl, fr, rl, rr, L, r, B):
-        super().__init__([fls,frs,fl,fr,rl,rr,SteeringJoint(low=fls.low, up=fls.up)], 2)
+        super().__init__([fls,frs,fl,fr,rl,rr,SteeringJoint(low=fls.low, up=fls.up)], AckermannDrive)
         self.L = L
         self.r = r
         self.B = B
@@ -153,20 +192,20 @@ class Ackermann(Robot):
         self.set_params(['L','r','B'])
 
     def update(self):
-        v, bdot = self.cmd
-        beta = self.joints[-1].val
+        v = self.cmd.speed
+        beta, bdot = self.joints[-1].adapt(self.cmd.steering_angle, self.cmd.steering_angle_velocity)
 
         # Twist
-        self.cmd_vel.linear.x = v * np.cos(beta)
-        self.cmd_vel.angular.z = v * np.sin(beta) / self.L
+        self.cmd_vel.linear.x = v * cos(beta)
+        self.cmd_vel.angular.z = v * sin(beta) / self.L
 
         # update beta
         self.joints[-1].move(bdot)
 
         # update steering angles
-        tb = np.tan(self.joints[-1].val)
-        self.joints[0].val = np.arctan(self.L*tb/(self.L+0.5*self.B*tb))
-        self.joints[1].val = np.arctan(self.L*tb/(self.L-0.5*self.B*tb))
+        tb = tan(self.joints[-1].val)
+        self.joints[0].val = atan(self.L*tb/(self.L+0.5*self.B*tb))
+        self.joints[1].val = atan(self.L*tb/(self.L-0.5*self.B*tb))
 
         # update wheels, find curvature radius
         # velocity of imaginary centered rear wheel
@@ -183,8 +222,8 @@ class Ackermann(Robot):
 
         rrl = rho-self.B/2
         rrr = rho+self.B/2
-        rfl = np.sqrt(rrl**2+self.L**2)*np.sign(rho)
-        rfr = np.sqrt(rrr**2+self.L**2)*np.sign(rho)
+        rfl = sqrt(rrl**2+self.L**2)*sign(rho)
+        rfr = sqrt(rrr**2+self.L**2)*sign(rho)
 
         for idx, dist in enumerate((rfl, rfr, rrl, rrr)):
             self.joints[idx+2].move(dist*ratio)
@@ -192,17 +231,21 @@ class Ackermann(Robot):
 
 class TwoSteering(Robot):
     def __init__(self, front, rear, beta1, beta2, L, r):
-        super().__init__([front, rear, beta1, beta2], 3)
+        super().__init__([front, rear, beta1, beta2], FourWheelSteering)
         self.L = L
         self.r = r
         self.set_params(['L','r'])
 
     def update(self):
-        # got (v, beta dot) in self.cmd
-        v1, bdot1, bdot2 = self.cmd
-        beta1,beta2 = self.state.position[2:4]
-        c1,s1 = np.cos(beta1), np.sin(beta1)
-        c2,s2 = np.cos(beta2), np.sin(beta2)
+        # got (v1, beta1 dot, beta2 dot) in self.cmd as FourWheelSteering
+        v1 = self.cmd.speed
+        beta1, bdot1 = self.joints[2].adapt(self.cmd.front_steering_angle,
+                                            self.cmd.front_steering_angle_velocity)
+        beta2, bdot2 = self.joints[3].adapt(self.cmd.rear_steering_angle,
+                                            self.cmd.rear_steering_angle_velocity)
+
+        c1,s1 = cos(beta1), sin(beta1)
+        c2,s2 = cos(beta2), sin(beta2)
         v2 = v1*c1/c2
 
         # Twist
@@ -214,8 +257,8 @@ class TwoSteering(Robot):
         wf = v1/self.r
         wr = v2/self.r
 
-        for idx, vel in enumerate((wf, wr, bdot1, bdot2)):
-            self.joints[idx].move(vel)
+        for idx, w in enumerate((wf, wr, bdot1, bdot2)):
+            self.joints[idx].move(w)
 
 
 def create_robot():
@@ -243,7 +286,7 @@ def create_robot():
 
     def Rot(theta,u):
         uuT = np.dot(np.reshape(u,(3,1)), np.reshape(u, (1,3)))
-        return np.cos(theta)*np.eye(3) + np.sin(theta)*sk(u) + (1-np.cos(theta))*uuT
+        return cos(theta)*np.eye(3) + sin(theta)*sk(u) + (1-cos(theta))*uuT
 
     def Homogeneous(joint):
         t = np.array(joint.origin.position).reshape(3,1)

@@ -66,23 +66,34 @@ The `spawn_anchor_launch.py` offers a simple way to spawn such anchors.
 
 As soon as some anchors are spawned, a `range` topic will be published in each robot's namespace. The same topic is used for all beacons, they can be identified with the `header.frame_id` of the Range message.
 
-## Using steering wheels robots
+## Animating the wheels
 
-A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle / Ackermann and two-steering robots. This node should be run in the robot namespace and will parse the `robot_description` in order to identify the robot type (unicycle / bicycle / Ackermann / two-steering) from the topology of the joints.
-
- - for unicycle robots, this node will subscribe to `cmd_vel` and publish the corresponding angle of the wheels
- - for other robots, it subscribes to `cmd` of type `std_msgs/Float32MultiArray`. This topic is assumed to be the one used for low-level control:
-    - `(front wheel velocity, steering velocity)` for bicycle robots
-    - `(front wheel velocity, front steering velocity, rear steering velocity)` for two-steering robots
- - Ackermann-like robots will be added a dummy joint called `steering` that represents the actual steering angle
-
-The node will publish the corresponding `joint_states` and, if the parameter `pub_cmd` is `True` it will also publish the corresponding Twist.
-
-It will also set the `(b, r)` (unicycle) or `(L, ~)` (other) parameters that are the wheel distance and radius parsed from `robot_description`.
-
-Set the parameter `rotate_wheels` to `False` in order not to display the rotation of the wheels (may lag a bit in RViz).
-
+A helper node `kinematics.py` is available to link the command and the current joint state, especially for bicycle / Ackermann and two-steering robots.
 This allows testing high-lever controllers for steering wheels robots.
+
+This node should be run in the robot namespace and will parse the `robot_description` in order to identify the robot type (unicycle / bicycle / Ackermann / two-steering) from the topology of the joints.
+The node will publish the corresponding `joint_states` in order to animate the wheels.
+
+The sampling time can be set from the parameter `dt` (default 0.1 s).
+
+###  Unicycle robots
+
+The node will simply subscribe to `cmd_vel` and publish the corresponding angle of the wheels. It will set the `(b, r)` parameters to the baseline and wheel radius parsed from `robot_description`.
+
+### Steering wheels
+
+- Bicycle or Ackermann-like: the node will subscribe to `cmd` and expects `ackermann_msgs/AckermannDrive` messages
+- Two steering wheels: the node will subscribe to `cmd` and expects `four_wheel_steering_msgs/FourWheelSteering` messages
+
+Ackermann-like robots will be added a dummy joint called `steering` that represents the actual steering angle.
+
+- Parameters:
+   - `pub_cmd` (default `True`) to publish the corresponding `cmd_vel`, subscribed by `map_simulator`
+   - `use_angle_cmd` (default `True`) to take into account the `steering_angle` setpoint from the message
+      - if `use_angle_cmd` is `False` or `steering_angle` is `NaN`, `steering_angle_velocity` is considered as a setpoint
+      - otherwise, `steering_angle_velocity` is considered as the maximum rate to reach the `steering_angle` setpoint
+
+The node will also set `(L, r)` parameters that are the wheel distance and radius parsed from `robot_description`.
 
 ## Examples
 

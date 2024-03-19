@@ -1,0 +1,16 @@
+# to be used with slider_publisher
+cmd:
+    type: four_wheel_steering_msgs/FourWheelSteering
+    v:
+        min: -10
+        max: 10
+        to: speed
+    beta1_dot:
+        min: -1
+        max: 1
+        to: front_steering_angle_velocity
+    beta2_dot:
+        min: -1
+        max: 1
+        to: rear_steering_angle_velocity
+
