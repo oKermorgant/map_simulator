@@ -6,6 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -19,7 +20,10 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
-set(CMAKE_CXX_STANDARD 17)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 if("$ENV{ROS_DISTRO}" STRLESS_EQUAL "humble")
     add_definitions(-DWITH_BUILTIN_RANGE)
@@ -41,7 +45,7 @@ target_include_directories(simulator PRIVATE include
                            ${OpenCV_INCLUDE_DIRS}
                            ${YamlCpp_INCLUDE_DIRS})
 target_link_libraries(simulator ${OpenCV_LIBRARIES} yaml-cpp stdc++fs tinyxml2)
-ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf)
+ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ament_index_cpp)
 if(${LEGACY_IDL})
     rosidl_target_interfaces(simulator ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
@@ -56,12 +60,6 @@ else()
     target_link_libraries(spawn "${cpp_typesupport_target}")
 endif()
 
-if(NOT WIN32)
-  ament_environment_hooks(
-    "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
-    )
-endif()
-
 install(TARGETS simulator spawn
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -73,5 +71,4 @@ install(DIRECTORY launch example
 install(PROGRAMS src/kinematics.py
     DESTINATION lib/${PROJECT_NAME})
 
-#ament_export_libraries(simulator)
 ament_package()
