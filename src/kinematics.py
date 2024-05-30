@@ -149,8 +149,8 @@ class Unicycle(Robot):
         v = self.cmd_vel.linear.x
         w = self.cmd_vel.angular.z
 
-        self.left.move((v-self.b*w)/self.r)
-        self.right.move((v+self.b*w)/self.r)
+        self.left.move((v-self.b*w/2)/self.r)
+        self.right.move((v+self.b*w/2)/self.r)
 
         if self.mimic:
             self.joints[2].val = self.left.val
