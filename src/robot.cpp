@@ -53,9 +53,6 @@ double withNoise(double val, double std)
 }
 
 
-rclcpp::Node* Robot::Robot::sim_node;
-builtin_interfaces::msg::Time Robot::stamp;
-
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
   : robot_namespace(robot_namespace), pose{_pose},
     linear_noise(_linear_noise), angular_noise(_angular_noise),
@@ -66,9 +63,9 @@ Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::
     pose.writeTo(initial_pose);
 }
 
-void Robot::publish(tf2_ros::TransformBroadcaster &br)
+void Robot::publish(tf2_ros::TransformBroadcaster &br, const rclcpp::Time &now)
 {
-  odom.header.stamp = transform.header.stamp = stamp;
+  odom.header.stamp = transform.header.stamp = now;
 
   // build odom angle & publish as msg + tf
   odom_pub->publish(odom);
@@ -81,13 +78,13 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
 
   if(hasLaser())
   {
-    scan.header.stamp = stamp;
+    scan.header.stamp = now;
     scan_pub->publish(scan);
   }
 
   if(js_pub.get())
   {
-    joint_states->header.stamp = stamp;
+    joint_states->header.stamp = now;
     js_pub->publish(*joint_states);
   }
 
@@ -96,13 +93,13 @@ void Robot::publish(tf2_ros::TransformBroadcaster &br)
     geometry_msgs::msg::TransformStamped pose_gt;
     pose_gt.header.frame_id = "map";
     pose_gt.child_frame_id = odom.child_frame_id + "_gt";
-    pose_gt.header.stamp = stamp;
+    pose_gt.header.stamp = now;
     pose.writeTo(pose_gt);
     br.sendTransform(pose_gt);
   }
   else
   {
-    initial_pose.header.stamp = stamp;
+    initial_pose.header.stamp = now;
     br.sendTransform(initial_pose);
   }
 }
@@ -334,10 +331,10 @@ void Robot::write(cv::Mat &img) const
   cv::fillConvexPoly(img, contour, color);
 }
 
-Range Robot::rangeFrom(const Anchor &anchor)
+Range Robot::rangeFrom(const Anchor &anchor, const rclcpp::Time &now)
 {
   Range range;
-  range.header.stamp = stamp;
+  range.header.stamp = now;
   range.header.frame_id = anchor.frame_id;
   range.field_of_view = 2*M_PI;
   range.max_range = anchor.max_range;
@@ -351,7 +348,7 @@ Range Robot::rangeFrom(const Anchor &anchor)
 }
 
 
-void Robot::publishRanges(const std::vector<Anchor> &anchors)
+void Robot::publishRanges(const std::vector<Anchor> &anchors, const rclcpp::Time &now)
 {
   if(anchors.empty())
     return;
@@ -360,7 +357,7 @@ void Robot::publishRanges(const std::vector<Anchor> &anchors)
         (robot_namespace + "ranges", 10);
 
   for(const auto &anchor: anchors)
-    range_pub->publish(rangeFrom(anchor));
+    range_pub->publish(rangeFrom(anchor, now));
 }
 
 }

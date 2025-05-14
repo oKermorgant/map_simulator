@@ -63,8 +63,7 @@ struct Pose2D
 };
 
 class Robot
-{        
-  static builtin_interfaces::msg::Time stamp;
+{
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr description_sub;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
@@ -91,7 +90,7 @@ class Robot
 
   // anchors stuff
   rclcpp::Publisher<Range>::SharedPtr range_pub;
-  Range rangeFrom(const Anchor &anchor);
+  Range rangeFrom(const Anchor &anchor, const rclcpp::Time &now);
 
   void loadModel(const std::string &urdf_xml, bool force_scanner, bool zero_joints, bool static_tf);
 
@@ -183,8 +182,7 @@ public:
   float theta_l() const {return pose.theta + laser_pose.theta;}
 
   // shared among robots
-  static rclcpp::Node* sim_node;
-  inline static void refreshStamp() {stamp = sim_node->get_clock()->now();}
+  inline static rclcpp::Node* sim_node;
   inline static void publishStaticTF(const geometry_msgs::msg::TransformStamped &tr)
   {
     static tf2_ros::StaticTransformBroadcaster static_tf_br(sim_node);
@@ -194,7 +192,7 @@ public:
   void move(double dt);
 
   // anchors stuff
-  void publishRanges(const std::vector<Anchor> &anchors);
+  void publishRanges(const std::vector<Anchor> &anchors, const rclcpp::Time& now);
 
   inline bool connected() const
   {
@@ -206,7 +204,7 @@ public:
     return scan_pub.get() != nullptr;
   }
 
-  void publish(tf2_ros::TransformBroadcaster &br);
+  void publish(tf2_ros::TransformBroadcaster &br, const rclcpp::Time &now);
 };
 
 }

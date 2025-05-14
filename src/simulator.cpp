@@ -106,14 +106,12 @@ void SimulatorNode::addAnchor(const Anchor &anchor)
 
 void SimulatorNode::refresh(const rclcpp::Time &now)
 {
-  Robot::refreshStamp();
-
   for(auto &robot: robots)
   {
     if(robot.connected())
     {
       robot.move(dt);
-      robot.publishRanges(anchors);
+      robot.publishRanges(anchors, now);
     }
   }
 
@@ -124,7 +122,7 @@ void SimulatorNode::refresh(const rclcpp::Time &now)
     for(auto &robot: robots)
     {
       if(robot.connected())
-        robot.publish(br);
+        robot.publish(br, now);
     }
     last_tf = now.nanoseconds();
   }
