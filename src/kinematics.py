@@ -128,7 +128,7 @@ class Robot(Node):
 
 class Unicycle(Robot):
     def __init__(self, left, right, b, r, left2=None, right2=None):
-        super().__init__([j for j in (left,right,left2,right2) if j is not None], 0)
+        super().__init__([j for j in (left,right,left2,right2) if j is not None], None)
         self.b = b
         self.r = r
         self.left = left
