@@ -97,6 +97,12 @@ The node will also set `(L, r)` parameters that are the wheel distance and radiu
 
 ## Examples
 
+Examples require `slider_publisher` and `simple_launch` packages:
+
+```
+sudo apt install ros-$ROS_DISTRO-slider-publisher ros-$ROS_DISTRO-simple-launch
+```
+
 ### Multi robot with 3 R2D2
 
 The `example/multirobot` folder shows how to run a simulation and spawn 3 robots. Sliders allow controlling the robots manually.
