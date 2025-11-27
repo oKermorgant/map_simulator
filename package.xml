@@ -16,12 +16,17 @@
   <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>yaml-cpp</depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>slider_publisher</exec_depend>
+  <exec_depend>simple_launch</exec_depend>
   <exec_depend>ackermann_msgs</exec_depend>
   <exec_depend>four_wheel_steering_msgs</exec_depend>
-
   <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
 
+  <member_of_group>rosidl_interface_packages</member_of_group>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
