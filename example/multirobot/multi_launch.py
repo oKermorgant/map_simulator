@@ -1,14 +1,19 @@
 from simple_launch import SimpleLauncher
 
 
-def generate_launch_description():
+sl = SimpleLauncher()
+sl.declare_arg('sep_tf', False)
 
-    sl = SimpleLauncher()
+
+def launch_setup():
+
+    sep_tf = sl.arg('sep_tf')
 
     # run the simulation
     sl.include('map_simulator', 'simulation2d_launch.py',
             launch_arguments={'map': sl.find('map_simulator', 'house.yaml'),
-                              'map_server': True})
+                              'map_server': True,
+                              'separate_tf': sep_tf})
 
     # also run RViz
     sl.rviz(sl.find('map_simulator', 'r2d2.rviz'))
@@ -27,7 +32,7 @@ def generate_launch_description():
             # xacro RGB expects a string of 3 floats in [0-1]
             xacro_color = f'"{' '.join(str(c/255) for c in color)}"'
 
-            tf_prefix = name + '/'
+            tf_prefix = '' if sep_tf else name + '/'
             sl.robot_state_publisher('map_simulator', 'r2d2.xacro',
                                     xacro_args={'prefix': tf_prefix, 'rgb': xacro_color})
 
@@ -41,3 +46,5 @@ def generate_launch_description():
                                 'x': float(name[-1])/2})
 
     return sl.launch_description()
+
+generate_launch_description = sl.launch_description(launch_setup)

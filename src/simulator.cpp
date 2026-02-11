@@ -9,6 +9,7 @@ SimulatorNode::SimulatorNode() : rclcpp::Node("simulator"), br(*this)
 {
   Robot::sim_node = this;
   dt = 1./declare_parameter("rate", 20);
+  separate_tf = declare_parameter("separate_tf", false);
 
   const auto share_folder{ament_index_cpp::get_package_share_directory("map_simulator")};
 
@@ -79,7 +80,7 @@ void SimulatorNode::addRobot(const Spawn::Request &spec)
 
 void SimulatorNode::removeRobotAt(int x, int y)
 {
-  robots.remove_if([&](const Robot &robot)
+  robots.remove_if([&](const auto &robot)
   {return robot.collidesWith(x,y);});
 }
 

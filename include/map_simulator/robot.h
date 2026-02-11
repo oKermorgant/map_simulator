@@ -13,7 +13,6 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <opencv2/core.hpp>
 #include <tinyxml2.h>
-#include <random>
 
 #include <map_simulator/srv/spawn.hpp>
 #include <map_simulator/srv/add_anchor.hpp>
@@ -73,6 +72,7 @@ class Robot
   inline static constexpr auto SQUARE = srv::Spawn::Request::SHAPE_SQUARE;
   inline static constexpr auto RECTANGLE = srv::Spawn::Request::SHAPE_RECTANGLE;
 
+
   nav_msgs::msg::Odometry odom;
   geometry_msgs::msg::TransformStamped transform, initial_pose;
 
@@ -82,6 +82,9 @@ class Robot
   double linear_noise = 0, angular_noise = 0;
   // 2D laser offset / base_link
   Pose2D laser_pose;
+
+  // tf tree separate or not
+  std::optional<tf2_ros::TransformBroadcaster> br;
 
   // optional publishers
   bool zero_joints = false;
@@ -204,7 +207,13 @@ public:
     return scan_pub.get() != nullptr;
   }
 
-  void publish(tf2_ros::TransformBroadcaster &br, const rclcpp::Time &now);
+  void publish(tf2_ros::TransformBroadcaster& br, const rclcpp::Time &now);
+  inline void publish(const rclcpp::Time &now)
+  {
+    if(!br.has_value())
+      br = tf2_ros::TransformBroadcaster(sim_node);
+    publish(br.value(), now);
+  }
 };
 
 }

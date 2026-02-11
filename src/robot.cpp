@@ -2,6 +2,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <urdf/model.h>
 #include <opencv2/imgproc.hpp>
+#include <random>
 
 namespace map_simulator
 {
@@ -25,8 +26,8 @@ std::unique_ptr<const urdf::Model> getModel(const std::string &urdf_xml)
 
 std::tuple<std::string, std::string, bool> decomposeBaseLink(const urdf::Model &model)
 {
-  std::string base_link(model.getRoot()->name);
-  auto prefix_length(base_link.find("base_"));
+  const auto base_link(model.getRoot()->name);
+  const auto prefix_length(base_link.find("base_"));
 
   if(prefix_length != base_link.npos)
     return {base_link.substr(prefix_length, base_link.npos), base_link.substr(0, prefix_length), true};
@@ -54,16 +55,16 @@ double withNoise(double val, double std)
 
 
 Robot::Robot(const std::string &robot_namespace, const Pose2D _pose, const std::array<double, 3> &size, cv::Scalar _color, cv::Scalar _laser_color, double _linear_noise, double _angular_noise)
-  : robot_namespace(robot_namespace), pose{_pose},
+    : robot_namespace(robot_namespace), pose{_pose},
     linear_noise(_linear_noise), angular_noise(_angular_noise),
     laser_color(_laser_color), color(_color), size(size)
 {
-    if(!isCircle())
-        updateContour();
-    pose.writeTo(initial_pose);
+  if(!isCircle())
+    updateContour();
+  pose.writeTo(initial_pose);
 }
 
-void Robot::publish(tf2_ros::TransformBroadcaster &br, const rclcpp::Time &now)
+void Robot::publish(tf2_ros::TransformBroadcaster& br, const rclcpp::Time &now)
 {
   odom.header.stamp = transform.header.stamp = now;
 
@@ -112,12 +113,12 @@ void Robot::initFromURDF(bool force_scanner, bool zero_joints, bool static_tf)
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   RCLCPP_INFO(sim_node->get_logger(), "waiting for %srobot_description...", robot_namespace.c_str());
   description_sub = sim_node->create_subscription<std_msgs::msg::String>(
-        robot_namespace + "robot_description", latching_qos,
-        [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
-  {
-    RCLCPP_INFO(sim_node->get_logger(), "Got %srobot_description", robot_namespace.c_str());
-    loadModel(msg->data, force_scanner,zero_joints,static_tf);
-  });
+      robot_namespace + "robot_description", latching_qos,
+      [&,force_scanner,zero_joints,static_tf](std_msgs::msg::String::SharedPtr msg)
+      {
+        RCLCPP_INFO(sim_node->get_logger(), "Got %srobot_description", robot_namespace.c_str());
+        loadModel(msg->data, force_scanner,zero_joints,static_tf);
+      });
 }
 
 std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xml, const std::string &link_prefix)
@@ -130,12 +131,12 @@ std::tuple<bool, uint, std::string> Robot::parseLaser(const std::string &urdf_xm
   const auto root{xml.RootElement()};
 
   for(auto gazebo_elem = root->FirstChildElement("gazebo");
-      gazebo_elem != nullptr;
-      gazebo_elem = gazebo_elem->NextSiblingElement("gazebo"))
+       gazebo_elem != nullptr;
+       gazebo_elem = gazebo_elem->NextSiblingElement("gazebo"))
   {
     for(auto sensor_elem = gazebo_elem->FirstChildElement("sensor");
-        sensor_elem != nullptr;
-        sensor_elem =sensor_elem->NextSiblingElement("sensor"))
+         sensor_elem != nullptr;
+         sensor_elem =sensor_elem->NextSiblingElement("sensor"))
     {
       if(strcmp(sensor_elem->Attribute("type"), "ray") == 0)
       {
@@ -202,7 +203,7 @@ void Robot::loadModel(const std::string &urdf_xml,
       scan_topic = scan_topic.substr(1, scan_topic.npos);
     adaptNamespace(scan_topic, robot_namespace);
     scan_pub = sim_node->create_publisher<sensor_msgs::msg::LaserScan>
-        (scan_topic,rclcpp::SensorDataQoS());
+               (scan_topic,rclcpp::SensorDataQoS());
   }
 
   odom_pub = sim_node->create_publisher<nav_msgs::msg::Odometry>(robot_namespace + "odom", 10);
@@ -211,13 +212,13 @@ void Robot::loadModel(const std::string &urdf_xml,
 
   // cmd vel subscriber
   cmd_sub = sim_node->create_subscription<geometry_msgs::msg::Twist>
-      (robot_namespace + "cmd_vel", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
-  {
-      // save perfect command velocities in odom anyway
-      odom.twist.twist.linear.x = msg->linear.x;
-      odom.twist.twist.linear.y = msg->linear.y;
-      odom.twist.twist.angular.z = msg->angular.z;
-});
+            (robot_namespace + "cmd_vel", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
+             {
+               // save perfect command velocities in odom anyway
+               odom.twist.twist.linear.x = msg->linear.x;
+               odom.twist.twist.linear.y = msg->linear.y;
+               odom.twist.twist.angular.z = msg->angular.z;
+             });
 
   // get offset between base link and scanner
   if(scan_pub.get() && scan.header.frame_id != link_prefix + base_link)
@@ -237,7 +238,7 @@ void Robot::loadModel(const std::string &urdf_xml,
         laser_pose.x = base_to_scan.transform.translation.x;
         laser_pose.y = base_to_scan.transform.translation.y;
         laser_pose.theta = 2*atan2(base_to_scan.transform.rotation.z,
-                                   base_to_scan.transform.rotation.w);
+                                     base_to_scan.transform.rotation.w);
         break;
       }
       rclcpp::sleep_for(std::chrono::seconds(1));
@@ -288,7 +289,7 @@ void Robot::move(double dt)
 
   // compute contour is we have a square shape
   if(!isCircle())
-      updateContour();
+    updateContour();
 
   // write actual covariance, proportional to velocity
   odom.twist.covariance[0] = std::max(0.0001, std::abs(vx)*linear_noise*linear_noise);
@@ -316,7 +317,7 @@ bool Robot::collidesWith(int u, int v) const
   if(isCircle())
   {
     return (u-pos_pix.x)*(u-pos_pix.x) + (v-pos_pix.y)*(v-pos_pix.y)
-        < radius()*radius();
+    < radius()*radius();
   }
   return cv::pointPolygonTest(contour, cv::Point{u,v}, false) != -1;
 }
@@ -354,7 +355,7 @@ void Robot::publishRanges(const std::vector<Anchor> &anchors, const rclcpp::Time
     return;
   if(!range_pub)
     range_pub = sim_node->create_publisher<Range>
-        (robot_namespace + "ranges", 10);
+                (robot_namespace + "ranges", 10);
 
   for(const auto &anchor: anchors)
     range_pub->publish(rangeFrom(anchor, now));

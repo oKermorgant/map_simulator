@@ -23,6 +23,7 @@ protected:
   OccupancyGrid grid;
   std::list<Robot> robots;
   rclcpp::TimerBase::SharedPtr refresh_timer, description_timer;
+  bool separate_tf{false};
 
   double dt;
 

@@ -10,9 +10,10 @@ def generate_launch_description():
     sl.declare_arg('rate', default_value=20)
     sl.declare_arg('map_server', default_value=False)
     sl.declare_arg('display', default_value=True)
+    sl.declare_arg('separate_tf', default_value=False)
 
     sl.node('map_simulator', 'simulator',
-            parameters = sl.arg_map('map', 'max_height', 'max_width', 'rate', 'display'),
+            parameters = sl.arg_map('map', 'max_height', 'max_width', 'rate', 'display', 'separate_tf'),
             output='screen')
 
     with sl.group(if_arg='map_server'):
