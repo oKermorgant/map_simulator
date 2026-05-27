@@ -26,7 +26,7 @@ def sign(val):
 
 
 class Wheel:
-    dt = 0.2
+    dt = 0.05
 
     def __init__(self, joint):
         self.name = joint.name
@@ -90,7 +90,7 @@ class Robot(Node):
 
         from rcl_interfaces.msg import ParameterDescriptor
         dt_description = ParameterDescriptor(description = 'Sampling time [s]')
-        Wheel.dt = self.declare_parameter('dt', 0.1, descriptor=dt_description).value
+        Wheel.dt = self.declare_parameter('dt', 0.05, descriptor=dt_description).value
 
         angle_description = ParameterDescriptor(description = 'Whether to use the steering angle cmd or only the velocity')
         SteeringJoint.use_angle_cmd = self.declare_parameter('use_angle_cmd', True, descriptor=angle_description).value
