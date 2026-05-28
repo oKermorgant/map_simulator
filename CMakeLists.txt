@@ -5,18 +5,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
-find_package(ament_index_cpp REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(urdf REQUIRED)
-find_package(tinyxml2_vendor REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
 find_package(TinyXML2 REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
@@ -40,30 +32,28 @@ else()
     rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 endif()
 
-add_executable(simulator src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
+# get ROSDISTRO to adapt fors header extension
+if("$ENV{ROS_DISTRO}" STRGREATER_EQUAL "lyrical")
+  add_compile_definitions(ROS_HEADERS_H_DEPRECATED)
+endif()
+
+ament_auto_add_executable(simulator src/simulator.cpp src/robot.cpp src/occupancy_grid.cpp)
 target_include_directories(simulator PRIVATE include
                            ${OpenCV_INCLUDE_DIRS}
                            ${YamlCpp_INCLUDE_DIRS})
 target_link_libraries(simulator ${OpenCV_LIBRARIES} yaml-cpp stdc++fs tinyxml2)
-ament_target_dependencies(simulator rclcpp sensor_msgs geometry_msgs nav_msgs tf2_ros urdf ament_index_cpp)
 if(${LEGACY_IDL})
     rosidl_target_interfaces(simulator ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
     target_link_libraries(simulator "${cpp_typesupport_target}")
 endif()
 
-add_executable(spawn src/spawn.cpp)
-ament_target_dependencies(spawn rclcpp)
+ament_auto_add_executable(spawn src/spawn.cpp)
 if(${LEGACY_IDL})
     rosidl_target_interfaces(spawn ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
     target_link_libraries(spawn "${cpp_typesupport_target}")
 endif()
-
-install(TARGETS simulator spawn
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch example
   DESTINATION share/${PROJECT_NAME})
@@ -71,4 +61,4 @@ install(DIRECTORY launch example
 install(PROGRAMS src/kinematics.py
     DESTINATION lib/${PROJECT_NAME})
 
-ament_package()
+ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)

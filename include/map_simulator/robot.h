@@ -8,11 +8,18 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <opencv2/core.hpp>
+#include <tinyxml2.h>
+
+#ifdef ROS_HEADERS_H_DEPRECATED
+#include <tf2_ros/transform_broadcaster.hpp>
+#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/static_transform_broadcaster.hpp>
+#else
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <opencv2/core.hpp>
-#include <tinyxml2.h>
+#endif
 
 #include <map_simulator/srv/spawn.hpp>
 #include <map_simulator/srv/add_anchor.hpp>

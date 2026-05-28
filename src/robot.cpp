@@ -1,5 +1,10 @@
 #include <map_simulator/robot.h>
+
+#ifdef ROS_HEADERS_H_DEPRECATED
+#include <tf2_ros/transform_listener.hpp>
+#else
 #include <tf2_ros/transform_listener.h>
+#endif
 #include <urdf/model.h>
 #include <opencv2/imgproc.hpp>
 #include <random>
